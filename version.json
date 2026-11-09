@@ -1,0 +1,15 @@
+{
+ "product": "PREPFIX CHURCH TOOLKIT",
+ "version": "V1",
+ "build": "202611091417",
+ "notes": "First update - guides, browser tabs, faster Prepfix control, own church name",
+ "files": {
+  "0 START PREPFIX CHURCH.bat": "4e7f8979d4a9e59e24f5a841b964e0a1c50d8db5b16fd325a750bc76f67b5335",
+  "HOW TO USE.txt": "67f930499faaf7ab64b32244b2685361f72126151d685690f9358bec7430a7ff",
+  "index.html": "402b1961077fe949dd56abba269a4aa5a5dbc4bb4e18bf1becfc781908d31839",
+  "server.js": "e9ea7021c730d9783eae0d44d09aac81bb17f0bf119b80c5dccff4d63c1db4e6",
+  "SETUP ON A NEW LAPTOP.txt": "38539cf9c57d37121c37e37cef02f5d7e813264663ecde3ac45d4d5e026355be",
+  "Start Prepfix Church.bat": "cf8458014c572a8dc25a6364ae736b117747b074d4aa6feb1dece85680e7b68b"
+ },
+ "sig": "XdDp2i17beiEZTgnWv5CPBQmVweG+heD/B/Cp/nWJv1EGnmI6sgVEnIj6Nwa0H+YoO2k1i1VIxMhWeedLTlyAQ=="
+}

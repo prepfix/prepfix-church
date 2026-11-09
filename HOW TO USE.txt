@@ -1,0 +1,391 @@
+PREPFIX CHURCH MEDIA TOOLKIT - HOW TO USE
+=========================================
+Developed by Cyrus Ireri - 0720872582
+
+The easy step-by-step guide is  GUIDE - Prepfix Church Media Toolkit.docx  in this folder (toolkit, phone app,
+team app). Send  Prepfix Team app - for members.pdf  to your praise and worship team. This file has every detail.
+
+Files in this folder
+  server.js          the program (do not edit)
+  index.html         the screens (do not edit)
+  data.json          ALL your songs, playlists and settings - keep it safe
+  data.backup.json   automatic copy of data.json, made every time the server starts
+  wallpaper.bin      the church wallpaper picture (appears after you upload one)
+
+Nothing to install: node.exe is inside this folder.
+
+
+1. START THE APPLICATION
+------------------------
+  - Open the toolkit folder.
+  - Click the address bar at the top of the folder window, type   cmd   and press Enter.
+  - In the black window type:   node server.js   and press Enter.
+  - Leave that black window open during the whole service. Closing it stops the app.
+  - The window shows the addresses to use (see below). To stop: press Ctrl+C or close it.
+
+  Easier: double-click "0 START PREPFIX CHURCH.bat" in this folder (it is always the first file in the list).
+  The first time, it also makes a gold-and-blue cross icon called "START PREPFIX CHURCH" in this folder and
+  "Prepfix Church" on the Desktop. From then on, double-click either icon.
+  It also removes the "Open File - Security Warning" for good: it clears the "downloaded from the internet" mark
+  from every file in this folder, and tells Windows not to ask about the files it starts.
+  (If the zip itself came from the internet and Windows asks once before the very first start: right-click the
+  zip > Properties > tick "Unblock" > OK, then unzip. Or choose "Run" on that one question - it never comes back.)
+
+
+2. OPEN IT ON THE COMPUTER
+--------------------------
+  The top line of the control page (Prepfix logo and the church name, glowing) stays fixed while you scroll.
+  The control page opens by itself when you start the app. If you close it, go to
+  http://localhost:3000 in Chrome or Edge (or double-click "0 START PREPFIX CHURCH.bat" again).
+
+
+3. OPEN IT ON A PHONE (same Wi-Fi)
+----------------------------------
+  - Connect the phone to the SAME Wi-Fi as the computer.
+  - The black window shows a line like:   Control (phone):  http://192.168.1.20:3000
+  - Type that address into the phone's browser.
+  - If it does not open: when Windows asks about the firewall the first time, choose "Allow"
+    (tick "Private networks"). Make sure the computer's Wi-Fi is set to a Private network.
+  - On the phone tap "Songs · Media · Tools" to choose a song and "Back to song" to return.
+    "More" shows the other buttons (wallpaper, blank stream, projector, settings).
+    The song's Edit / Share / Add to playlist / Delete are in the small "..." menu by its title.
+  - At the top: Previous stanza | Hide screen | Next stanza. Tap a line number to show a line.
+
+
+4. CHURCH PROJECTOR (HDMI)
+--------------------------
+  - Connect the projector/TV by HDMI and set Windows to "Extend" (Windows key + P).
+  - AUTOMATIC: when you start the app, the church screen opens by itself, full screen, on
+    the projector, and the control page opens on your computer screen. If the projector
+    is connected later, the church screen opens on it within about 10 seconds.
+    (Turn this off in Display settings > "Open the church screen on the projector by itself".)
+  - Press "Show on projector" (or key P). The church screen opens FULL SCREEN on the
+    projector by itself, while your control page stays on the computer screen.
+  - To exit, press "Close projector" (or key P again). Press it again to bring it back.
+    This works from the phone too.
+  - If two extra screens are connected, it asks which one is the projector.
+  - "Hide screen" (key H) makes the church window step aside instantly, so the projector
+    shows your normal Windows desktop and wallpaper exactly as usual. "Show screen" brings
+    the full-screen lyrics straight back (no reopening).
+    While hidden you can keep moving through the lines (the stream still follows);
+    the projector stays hidden until you press "Show screen".
+  - Manual way (any browser): "Open church screen", drag the window to the projector,
+    then double-click it (or press F11) for full screen. Esc leaves full screen.
+  - Tapping a line shows the WHOLE stanza on the projector. Other lines in the same stanza
+    do not change the projector; choosing a line in a different stanza changes it.
+  - "Church wallpaper" button (key B) hides the lyrics and shows the wallpaper / background.
+  - The church screen shows the church name and the Prepfix logo small in the bottom-right
+    corner (Display settings can switch this off). The live stream never shows it.
+  - The round church seal (Display settings > "Show the round church seal"): the church name runs round the top of
+    the ring from 8 o'clock to 4 o'clock, a row of stars fills the bottom, and a small crucifix (Christ on the cross)
+    is in the middle, big enough for Christ to be seen.
+  - The same seal shows beside the lyrics on the live stream (OBS). Display settings > Stream screen >
+    "Show the church seal (logo) beside the lyrics on the stream" turns it off. It shows only while lyrics show.
+  - Church screen preview: the small box in the bottom-right of the control page shows exactly
+    what the church screen shows, even when no projector is connected (on a phone: More >
+    Screen preview). Tap it to make it small; tap again to open it.
+  - Display settings: font, biggest text size (it shrinks automatically to fit), text colour,
+    background colour, wallpaper, wallpaper behind lyrics, darken wallpaper, soft text shadow.
+
+  Video wallpaper (moving background):
+  - Display settings > Wallpaper > choose an MP4 video (a picture also works).
+  - The video plays silently on a loop. It shows when you press "Church wallpaper", and also
+    behind the lyrics if you tick "Show the wallpaper behind the lyrics too".
+  - Tick "Darken the wallpaper while lyrics are showing" so the words stay easy to read.
+  - Too much movement? Display settings > "Video wallpaper movement": Slow, Very slow, or
+    Still (no movement - shows one picture from the video). "Soften the video wallpaper"
+    blurs it a little or more, so it becomes a calm background.
+  - Best results: MP4, 1920x1080, 30 seconds to 2 minutes long, calm slow motion, under 200 MB.
+    Very large videos take longer to upload from a phone.
+  - Use Chrome or Edge for the church screen.
+
+
+5. ADDING AND IMPORTING SONGS
+-----------------------------
+  New song:
+  - Press "New song", type the title.
+  - "Search Google for lyrics" opens Google; copy the lyrics there.
+  - "Paste copied lyrics" (or Ctrl+V / press-and-hold Paste on a phone).
+  - Or "Get lyrics from a web link": open the lyrics page in the browser, copy its link from
+    the address bar, press the button and paste the link. The toolkit opens the page, keeps
+    only the lyrics (menus, adverts and comments are left out) and fills in the title if empty.
+    Read them through before saving. Needs internet on the computer for that moment only.
+    Some lyrics sites block this - then copy the lyrics on the page and use "Paste copied lyrics".
+  - Or "Read lyrics from pictures": choose one or more screenshots or photos of the song (on a
+    phone you can take a photo). The words are read straight into the lyrics box, in order, with
+    the stanza gaps kept. A heading at the top becomes the title. Works without internet.
+    Always read it through: pictures can give small mistakes (l and I, missing ĩ / ũ marks).
+  - Leave ONE EMPTY LINE between stanzas. Line breaks are kept exactly as typed.
+  - Press "Save song".
+  Song numbers: every song has its own number (the gold round number before its title, and beside the title when the song
+  is open). The number is permanent: adding, deleting, importing or restoring songs never changes the number of any
+  other song, and a number is never given to a different song. A deleted song that is restored gets its old number back.
+  New songs get the next free number.
+  Finding a song: type in the search box a NUMBER (12, #12 or no. 12), part of the TITLE, or any WORDS from inside the
+  song (capitals, commas and line breaks do not matter). The exact number is shown first; Enter opens the first one.
+  Edit / delete: open the song and use Edit or Delete, or right-click (press and hold on a
+  phone) a song in the list.
+  Quick edits: right-click (press and hold on a phone) a STANZA or the CHORUS to Edit, Cut,
+  Delete (or Paste a cut stanza after another one). Right-click the song TITLE to edit it.
+  Everything saves by itself as you change it - there is no need to press Save.
+
+  Import songs (from other song programs too):
+  - Press "Import songs" and choose many files at once. It reads:
+      EasyWorship: Songs.db + SongWords.db (choose both together), .ewsx, RTF exports
+      ProPresenter 7 (.pro) and 6 (.pro6)      OpenLP: .xml exports, songs.sqlite, .osz
+      OpenSong song files    VideoPsalm (.json)    FreeShow (.show)    EasySlides (.xml)
+      Quelea    SongSelect / CCLI (.usr, .txt)    ChordPro (.cho)    SongBeamer (.sng)
+      PowerPoint (.pptx - one song per file, each slide a stanza)    Word (.docx)
+      Text (.txt), web pages (.html), Prepfix songs files (.json), or a .zip of any of these.
+  - Your own song documents - PDF, Word (.docx, and .doc if Word is installed), PowerPoint (.pptx),
+    text (.txt): put the song TITLE on its own line, then the stanzas with an EMPTY LINE between
+    them. One file can hold many songs: each title on its own line starts the next song.
+    Hymn numbers (1. 2. ...) and words like "Chorus" are removed. Bold or Heading lines in Word
+    and bigger lines in a PDF are taken as titles. Scanned PDFs (pictures of pages) are read too.
+    Old PowerPoint (.ppt) files: open in PowerPoint, Save As .pptx, then import.
+  - Pictures and screenshots of lyrics (.jpg, .png...) can be chosen in Import songs too:
+    each picture becomes one song. For a song spread over several screenshots, use
+    New song > "Read lyrics from pictures" and choose all of them together.
+  - "Songs from other programs" looks on this computer for EasyWorship, OpenLP, ProPresenter,
+    FreeShow, OpenSong and VideoPsalm and imports their whole song library with one button.
+  - Songs already in the library are skipped.
+
+  Tidy (one uniform look for all songs):
+  - Every word starts with a capital letter, the rest small - no more ALL CAPITALS.
+  - Leftover HTML, extra blank lines, "Author Unknown", section names (Verse 1, Chorus,
+    Kiitikio...) and copyright lines are removed. Stanzas longer than 8 lines are split.
+  - New songs, edited songs and imported songs are tidied automatically when saved.
+  - "Tidy all songs" does the same to every song already in the library.
+
+  Select several songs: in the Songs tab press "Select". Tick the songs you want, or search
+  (e.g. "yesu") and press "Select all". Then choose what to do with all of them at once:
+  add to a playlist (or make a new playlist from them), make favourites / remove from favourites,
+  tidy, export to a file, share (WhatsApp, email...), or delete. Press "Done" when finished.
+  Song folders (kinds of songs - Praise, Worship, Hymns, Swahili, Kikuyu...):
+  - Songs tab: the box above the search shows "All songs" or one folder. Choose "+ New folder..."
+    to make one. With a folder showing, ✎ renames it and 🗑 deletes it (its songs are kept).
+  - Put songs in a folder: Select > tick songs > "Put in a folder". Or open a song and use the
+    📁 box under its title. A song is in one folder at a time.
+  - Export can export one folder.
+
+  Playlists = the order of service for a day (e.g. "Sunday 9 Nov"):
+  - Open the playlist and press "+ Section" for parts like Slow set, Fast set, Praise, Worship,
+    Presentation, Choir, Echoes (or type your own), with the name of the lead or group.
+  - Sections show as gold headings in the playlist. Move a heading with ↑ ↓, tap it (✎) to change
+    or remove it. To put songs under a section: Select > tick songs > "Into section: ...".
+  - When a song from the playlist is open, the line under its title shows its section and lead.
+  - Next / previous song in the playlist skips over the headings. Share and Export keep them.
+
+  Moving songs (sorting them out):
+  - Songs tab > Select > "Move to a playlist": the songs go into that playlist and are taken
+    out of any other playlist.
+  - Playlists tab > open a playlist > Select: move the ticked songs to another playlist (they
+    leave this one), copy them (they stay here too), move them to the top or bottom of this
+    playlist, or remove them from it. ↑ ↓ beside each song still move one song at a time.
+
+  Favourites: tap the star beside a song (or on its page) to make it a favourite.
+  The "★" button next to the search box shows only favourites (tap again for all songs).
+  While favourites are showing, "+ Add all favourites to a playlist..." puts them into a playlist
+  (or makes a new playlist from them). Songs already in the playlist are not added twice.
+  To export one playlist: Playlists tab > choose the playlist > Export.
+
+  Export songs: choose All songs, Favourites or a playlist, and the kind of file:
+  - Prepfix songs file (.json): bring it into any Church Media Toolkit with Import songs.
+    Its playlists and favourites come too; songs already there are skipped.
+  - Text file (.txt): to read, print or send.
+  The file goes to the Downloads folder. A Display settings > Download backup file can also
+  be brought back with Import songs.
+
+  Share: open a song and press Share - WhatsApp, Email, Copy, or the phone's share menu.
+
+
+6. PLAYLISTS
+------------
+  - Playlists tab > "New playlist" (e.g. "Sunday 3 Nov").
+  - Press "+ Add songs", then "+ list" beside each song (press again to remove).
+    Or, with a song open, use "+ Add to playlist..." next to its title.
+  - In the Playlists tab use the arrows to reorder, X to remove, Rename, Delete, Share
+    (shares all song titles and lyrics).
+  - When a song is opened from a playlist: on its LAST stanza the button becomes "Next song"
+    (with the song's name), and on its FIRST stanza it becomes "Previous song".
+    Page Down / Page Up on the laptop do the same.
+
+
+7. LIVE STREAM IN OBS
+---------------------
+  - In OBS: Sources > + > Browser.
+  - URL:     http://localhost:3000/?view=stream
+  - Width 1920, Height 1080 (match your canvas). Leave "Custom CSS" as it is.
+  - Tick "Refresh browser when scene becomes active" (optional).
+  - The stream shows ONLY the selected line, at the bottom, with a transparent background.
+  - Display settings > Stream screen: font, size, colour, and the readability effect
+    (black outline, soft shadow, dark box, or none).
+  - "Blank stream" button (key S) hides the stream lyrics.
+  - If OBS is on a different computer, use the phone address instead of localhost,
+    e.g. http://192.168.1.20:3000/?view=stream
+
+
+KEYBOARD SHORTCUTS (computer)
+  Down / Right arrow    next line            S / Page Down   next stanza
+  Up / Left arrow       previous line        Page Up         previous stanza
+  C                     show the chorus      H               hide / show the church screen
+  B                     blank / show stream  W               church wallpaper
+  P                     show / close projector
+
+
+BACKUP
+  Display settings > "Download backup" saves a copy of everything. You can also just copy
+  data.json to a flash disk. To restore, put the file back as data.json and restart.
+
+MEDIA  (tab "Media")
+  Pictures, videos and music:
+  - "Add pictures / videos / music": choose pictures, videos or music (several at once is fine).
+  - Any video (MP4, MOV, AVI, WMV, MKV, FLV, 3GP, MPEG...) and any music (MP3, M4A, WAV, WMA...)
+    can be added. Kinds a browser cannot play are changed to MP4 / MP3 automatically (a progress
+    message shows). This uses FFmpeg; if it is not found, copy ffmpeg.exe into the toolkit folder.
+    If you choose several pictures you are asked: OK = one slide set, Cancel = separate pictures.
+  - Open an item and press "Show this now". Pictures and videos fill the projector screen.
+  - Videos: Play, Pause, From start, Sound on / Muted, Loop.
+    No projector screen open yet? The video plays right there on the laptop, with sound.
+    When the projector screen opens it joins in at the same point and plays the sound;
+    the laptop preview goes quiet. Your buttons control both.
+    Hide screen / Church wallpaper pause the video; showing again carries on.
+    If a video will not play (some phone videos), press "Convert it to MP4 now" under it.
+  Background music:
+  - Open a music item and press "Play this music". It keeps playing while you show songs,
+    slides or pictures. Play / Pause / Stop / Loop; the status line at the top also has
+    pause and stop buttons. Like videos, it plays on the laptop until the projector screen opens.
+  Slide sets:
+  - "Add PowerPoint / PDF / Excel / Word / Publisher": choose the document.
+    PDF: every page becomes a slide (works on any laptop).
+    Excel, Word, Publisher: Microsoft Office on the laptop turns them into pages, then slides.
+    If that Office program is not installed, save the file as PDF in it and add the PDF.
+    PowerPoint: choose a .pptx file. Microsoft PowerPoint on this laptop turns every slide
+    into a picture (it can take a minute). Without PowerPoint: save the slides as pictures
+    (PowerPoint or Google Slides: File > Download/Export as PNG or JPEG) and add the pictures
+    together as one slide set.
+  - "New text slides": type announcements. Leave an empty line between slides; the first line of
+    each slide is its heading. "Edit" changes them later.
+  - Tap a slide to show it. Next slide / Previous slide (or the arrow keys) move through the set.
+  - Rename or Delete an item with the buttons at the top (deleting also removes its files).
+  - The live stream (OBS) shows nothing while media is on, so the camera is not covered.
+
+TOOLS  (tab "Tools")
+  - Countdown timer: type the minutes and the words above it (e.g. Service starts in), press Start.
+    Pause stops it; Start again carries on; Reset sets it back. It turns red at 00:00.
+  - Clock: "Show the time on the projector" shows the time and date big.
+    A small clock also sits in the bottom-left corner of the church screen all the time
+    (Display settings > "Show a small clock in the bottom-left corner" to turn it off).
+  - Alert: type the message (e.g. Car KBX 123A please move it from the gate), choose how long it
+    stays, press "Show alert". It appears as a red bar at the top of the projector, over whatever
+    is showing. Tick "Also on stream" to put it on the live stream too. "Clear alert" removes it.
+  - To leave the timer or clock, tap a song line or show something from Media.
+
+CHURCH AND STREAM CONTROLS (top of the control page)
+  - Two rows, one above the other. "Church" shows what is on the projector now, "Stream" shows
+    what is going to OBS now.
+  - Hide church / Show church: hides the lyrics on the projector (your normal wallpaper shows).
+    Key H. The row turns red while it is hidden.
+  - Blank stream / Show stream: takes the lyrics off the live stream (camera only). Key S.
+    The row turns red while it is blank.
+
+PRACTICE LINKS (for the praise and worship team)
+  - Every song can have a link to the song on YouTube, Spotify, Audiomack, SoundCloud or an MP3.
+  - Open the song and press "Add practice link", or put it in Edit > Practice link.
+    Songs with a link show a small headphone mark in the song list.
+  - Press "Play practice song". A small player opens in the corner (at the bottom on a phone)
+    and the song plays inside the toolkit while you read the lyrics. You can open other songs and
+    the music keeps playing. Lyrics brings you back to that song; the arrows make the player
+    bigger or smaller; the ↗ button opens it in the YouTube app or a new tab; ✕ stops it.
+  - The player is only on that laptop or phone - it never shows on the church screen or the stream.
+  - It needs internet. Some websites do not allow playing inside other programs; then use ↗.
+  - During practice at church, team members on the same Wi-Fi as the laptop can open the
+    Phone app link on their own phones, pick the song and press Play practice song. (The phone
+    page can also control the screens, so only give the link to people you trust.)
+
+TEAM APP (Prepfix Team - for the praise and worship team, on their own phones)
+  - Press "Team app" (top of the control page). Do this on ONE computer only.
+  - Tick "Share our songs with the team app".
+  - Team members: type each member's name and phone number and press "+ Add" ("Paste a list..." for many).
+    Only these numbers can open the songs. Press Save.
+  - Share the link (or the QR code) in the team's WhatsApp group, with the page "Prepfix Team app - for members.pdf".
+  - Each member opens the link, types their registered phone number and MAKES THEIR OWN 4-number PIN (once).
+    They stay signed in. One number works on ONE phone. "Install the app on this phone" puts it on the home screen.
+  - Changing phone / forgot PIN / someone else used the number: press "Remove sign-in" beside the member;
+    they sign in again. A member who leaves: press X beside the name.
+  - Members see all the church's songs with the lyrics and the practice links, from anywhere (they need internet).
+  - Leaders make a playlist in the app (Slow set, Fast set, Choir with the lead's name), then press
+    "Send to church toolkit". When this computer is online it appears under Playlists as
+    "<playlist name> (from <leader>)", with a green notice at the top. Sending again updates the same playlist.
+  - Members can also add a song that is not in the list (title, lyrics, practice link) and add a practice link
+    to a song that has none. New songs go into the folder "From the team" (check them), links are added to songs.
+  - New songs and new practice links go to the app by themselves whenever this computer is online.
+  - To stop sharing, untick the box and press Save.
+
+UPDATES
+  Display settings > About & updates > "Check for updates" (needs internet).
+  If a new version is ready, press "Install update now". The toolkit restarts by itself.
+  Songs, playlists, settings, wallpaper and the church licence are never changed.
+  If anything goes wrong during an update, nothing is changed.
+
+LICENCE
+  This toolkit is licensed to one church; the church name shows at the top of the control page.
+  Copies that are edited or not licensed show "PIRATED / UNLICENSED COPY".
+  Prepfix support: 0720872582 · irericyrus004@gmail.com
+
+
+LICENCE AND RENEWAL
+-------------------
+  The toolkit is licensed to your church by Prepfix and is paid for a year at a time.
+  Display settings > About shows your church name, Licence ID and the "paid until" date.
+  - 7 days before the date, a notice appears at the top of the control page.
+  - After the date there are 7 days of grace (a red notice counts them down).
+  - Then the projector and stream show only a Prepfix notice until the licence is renewed.
+    Your songs, playlists, media and settings are never lost.
+  To renew: pay Prepfix (0720872582). You receive a renewal code (it starts with PFX1.).
+  Type or paste it in Display settings > About > Renew (or in the red box) - it works at once,
+  without internet. When the computer is online, a renewal from Prepfix can also come in by itself.
+  Changing the computer's date does not extend the licence.
+
+SEVERAL PRACTICE LINKS FOR ONE SONG
+A song can have more than one practice link (for example a slow and a fast version).
+- Open the song and press  ✎ Links  (or Edit, then the Practice links box).
+- Put ONE link on each line. You can type a name first, like:  Slow version https://youtu.be/...
+- The song then shows a ▶ button for each link. While one is playing, the small list in the player switches to another.
+- The praise and worship team sees the same buttons in the Prepfix Team app (upload the new Team app files to GitHub).
+
+
+THE CONTROL WINDOW AND FULL SCREEN
+-----------------------------------
+  - The control page opens in a big browser window WITH TABS: press + (or Ctrl+T) to open YouTube or anything
+    else beside the toolkit. F11 = full screen and back.
+  - The church screen (projector) opens full screen by itself. A church screen opened by hand in a browser: click
+    anywhere once for full screen, Esc to leave, F or double-click to come back.
+  Long stanzas are cut into smaller stanzas automatically (also when the whole song is one long line).
+
+  SEARCH MANY SONGS AT ONCE: in the search box write numbers, titles or words from the lyrics, separated by commas
+  (or ; or +).  Examples:  12, 45, 100      105-110      mwokozi, 33, nyakati zote
+  The songs appear in the order you wrote them. "Make a playlist of these" puts them ready to display, one after the other.
+  Pasting a list with one song per line works too.
+
+NEW IN THIS VERSION
+===================
+  The control page opens in a big browser window with tabs (+ or Ctrl+T for a new tab; F11 = full screen).
+
+  Bigger title line: CHURCH MEDIA TOOLKIT and the church name now use the whole top line.
+
+  Top buttons: two tidy lines. Line 1: Wallpaper, Projector, Church screen, Stream screen.
+  Line 2: Settings, Phone app, Team app.
+
+  Find many songs at once (Songs tab, and on the phone too):
+    1. Press "Find many songs at once - make a playlist" (or paste several lines into the search box).
+    2. Write ONE SONG ON EACH LINE: words from the lyrics, a title, or a song number. Example:
+           Chakutumaini sina
+           wewe mungu wastahili
+           1
+           23
+           kila siku
+    3. Every line is checked against your songs. A green tick shows the song found (and the lyric line that matched);
+       a red cross means NO song has those words, so nobody needs to search online for it.
+    4. If several songs match a line, choose the right one in the small list beside it. Untick a song to leave it out.
+    5. Type a playlist name and press "Make playlist and open the first".
