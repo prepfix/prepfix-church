@@ -455,6 +455,7 @@ public static class CLWin {
   [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h, int c);
   [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
   [DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte scan, uint flags, UIntPtr extra);
+  [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr h, uint m, IntPtr w, IntPtr l);
   static List<IntPtr> hidden = new List<IntPtr>();
   static List<IntPtr> Find(bool visible) { return FindP(visible, "Church Lyrics Projector"); }
   static List<IntPtr> FindP(bool visible, string prefix) {
@@ -478,6 +479,9 @@ public static class CLWin {
       break;
     }
   }
+  // the control page's own small buttons: minimise / close its window (it may be in full screen, with no title bar)
+  public static void Min(string prefix) { foreach (var h in FindP(true, prefix)) { ShowWindow(h, 6); break; } }
+  public static void Close(string prefix) { foreach (var h in FindP(true, prefix)) { PostMessage(h, 0x0010, IntPtr.Zero, IntPtr.Zero); break; } }
   public static void Hide() { foreach (var h in Find(true)) { ShowWindow(h, 0); if (!hidden.Contains(h)) hidden.Add(h); } }
   public static void Show() {
     var list = hidden.Count > 0 ? hidden : Find(false);
@@ -489,7 +493,7 @@ public static class CLWin {
 while ($true) {
   $line = [Console]::In.ReadLine()
   if ($line -eq $null) { break }
-  if ($line -eq 'hide') { [CLWin]::Hide() } elseif ($line -eq 'show') { [CLWin]::Show() } elseif ($line -like 'full:*') { [CLWin]::FullScreen($line.Substring(5)) }
+  if ($line -eq 'hide') { [CLWin]::Hide() } elseif ($line -eq 'show') { [CLWin]::Show() } elseif ($line -like 'full:*') { [CLWin]::FullScreen($line.Substring(5)) } elseif ($line -like 'min:*') { [CLWin]::Min($line.Substring(4)) } elseif ($line -like 'close:*') { [CLWin]::Close($line.Substring(6)) }
 }
 `;
 let winHelper = null;
@@ -3699,6 +3703,13 @@ const SERVER = http.createServer((req, res) => {
       res.end('ok');
     });
 
+  } else if (p === '/api/window' && req.method === 'POST') { // the control page's minimise / close buttons (this laptop only)
+    readBody(req, res, b => {
+      let q = {}; try { q = JSON.parse(b.toString('utf8') || '{}'); } catch (e) {}
+      if (isLocalReq(req) && (q.act === 'min' || q.act === 'close')) winCtl(q.act + ':Prepfix Church Media Toolkit');
+      res.end('ok');
+    });
+
   } else if (p === '/api/projector' && req.method === 'POST') {
     readBody(req, res, b => {
       let q = {}; try { q = JSON.parse(b.toString('utf8') || '{}'); } catch (e) {}
@@ -3928,7 +3939,7 @@ SERVER.on('listening', () => {
   console.log('  ==============================================');
   rememberToday(); setInterval(() => { rememberToday(); const b = LIC.status + LIC.phase; LIC = readLicense(); if (LIC.status + LIC.phase !== b) pushData(); }, 3600000);
   setTimeout(checkin, 60000); setInterval(checkin, 30 * 60000); // every 30 minutes: suspension / renewal / message from Prepfix
-  setTimeout(() => teamSync(), 30000); setInterval(() => teamSync(), 120000); // team app: new songs out, leaders' playlists in
+  setTimeout(() => teamSync(), 30000); setInterval(() => teamSync(), 60000); // team app: new songs out, leaders' playlists in (every minute)
   if (LIC.status === 'ok') console.log('  Licensed to: ' + LIC.church + '   (paid until ' + LIC.until + ')' + (LIC.phase !== 'ok' ? '\n  !! The licence ' + (LIC.phase === 'warn' ? 'ends soon' : 'has ended - grace days left: ' + (LIC.days + GRACE_DAYS)) + '. Renew with Prepfix: ' + SUPPORT.phone : ''));
   else if (LIC.status === 'expired') console.log('  !! LICENCE EXPIRED on ' + LIC.until + ' (' + LIC.church + '). Renew with Prepfix: ' + SUPPORT.phone);
   else if (LIC.status === 'suspended') console.log('  !! LICENCE SUSPENDED by Prepfix (' + LIC.church + '). Contact Prepfix: ' + SUPPORT.phone);

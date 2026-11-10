@@ -455,6 +455,10 @@ body{font-size:17px}
 .dsong.most{background:#12301f;border-left:6px solid #2e9d6b;border-radius:6px}.dsong.most .dbar i{background:#2e9d6b}
 
 #list .song.kb{outline:3px solid #ffd54a;outline-offset:-2px;background:#3a3320;border-radius:6px}
+.bar.sh h2{overflow-wrap:anywhere;word-break:break-word;min-width:0}main,#main{min-width:0}
+#winb{position:fixed;top:6px;right:8px;z-index:200;display:flex;gap:4px}
+#winb button{padding:3px 11px;font-size:15px;line-height:20px;background:#262b35;color:#e9e6df;border:1px solid #3a4150;border-radius:6px;opacity:.85}
+#winb button:hover{opacity:1;background:#323946}#winb button.x:hover{background:#b8392f;border-color:#b8392f}
 </style></head>
 <body>
 <script>
@@ -553,6 +557,19 @@ function loadDesktop(stamp){
   fetch('/api/desktop').then(r=>r.json()).then(d=>{desk=d;if(d.ok){const i=new Image();i.onload=renderOut;i.src='/desktop-wallpaper?'+d.v}else renderOut()}).catch(()=>{});
 }
 if(V==='church')loadDesktop(-1);
+// SMOOTH CHANGES: the old words fade out, the new ones fade in (church screen and stream). Pictures, videos,
+// the timer and the clock change at once.
+function noLyr(t){t.__want=null;t.__busy=false;t.style.transition='';t.style.opacity='1'}
+function swapLyrics(t,html,fitFn){
+  if(t.__want===html){if(!t.__busy)fitFn();return}
+  t.__want=html;
+  const done=()=>{if(t.__want!==html)return;t.innerHTML=html;fitFn();t.__busy=false;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{if(t.__want!==html)return;t.style.transition='opacity .28s ease-out';t.style.opacity='1'}))};
+  if(PREVIEW){noLyr(t);t.__want=html;t.innerHTML=html;fitFn();return}
+  t.__busy=true;
+  if(t.textContent.trim()){t.style.transition='opacity .2s ease-in';t.style.opacity='0';setTimeout(done,200)}
+  else{t.style.transition='';t.style.opacity='0';done()}
+}
 function renderOut(){
   let box=document.querySelector('.out');
   if(!box){box=document.createElement('div');box.className='out';box.innerHTML='<div class="t"></div>';document.body.appendChild(box)}
@@ -577,7 +594,7 @@ function renderOut(){
       dim=document.createElement('div');dim.id='dim';document.body.prepend(dim);document.body.prepend(v);
     }
     if(DM){ // lyrics hidden: look exactly like the computer's own desktop wallpaper
-      v.style.display='none';if(!v.paused)v.pause();dim.style.display='none';t.innerHTML='';showMediaLayer(null);showYtLayer(null);
+      v.style.display='none';if(!v.paused)v.pause();dim.style.display='none';noLyr(t);t.innerHTML='';showMediaLayer(null);showYtLayer(null);
       loadDesktop(L.churchHide||2);
       const d=desk||{},mode={6:'center/contain no-repeat',2:'center/100% 100% no-repeat',0:d.tile?'top left repeat':'center no-repeat'}[d.style]||'center/cover no-repeat';
       document.body.style.background=d.ok?d.color+' url(/desktop-wallpaper?'+d.v+') '+mode:(d.color||'#000');
@@ -606,15 +623,14 @@ function renderOut(){
     t.style.color=(TH&&TH.fg)||c.color||'#fff';t.style.fontFamily=c.font||'Georgia';
     t.style.textShadow=(c.shadow||(TH&&TH.k!=='color'&&!TH.fg))?'0 .05em .25em #000,0 0 .1em #000':'none';
     // pictures, videos and picture slides cover the screen; text slides, timer and clock use the lyrics area
-    const Y=L.mode==='yt'&&L.yt&&!L.churchBlank&&!licStopped(S.lic)?L.yt:null;showYtLayer(Y);if(Y){t.innerHTML='';showMediaLayer(null);return}
+    const Y=L.mode==='yt'&&L.yt&&!L.churchBlank&&!licStopped(S.lic)?L.yt:null;showYtLayer(Y);if(Y){noLyr(t);t.innerHTML='';showMediaLayer(null);return}
     const M=L.mode==='media'&&L.media&&!L.churchBlank?L.media:null,textSlide=M&&M.type==='slides'&&!(M.s||{}).img;
     showMediaLayer(M&&!textSlide?M:null);
-    if(M&&!textSlide){t.innerHTML='';return}
-    if(textSlide){t.classList.add('tslide');t.innerHTML='<div class="stitle">'+esc(M.s.title||'')+'</div>'+(M.s.text?'<div class="stext">'+esc(M.s.text).replace(/\n/g,'<br>')+'</div>':'');fit(t,c.size||110);return}
-    if(L.mode==='timer'&&!L.churchBlank){const ms=timerLeft(L.timer);t.classList.add('timer');t.innerHTML=((L.timer||{}).msg?'<div class="tmsg">'+esc(L.timer.msg)+'</div>':'')+'<div class="tbig'+(ms<=0?' done':'')+'" id="tbig">'+fmtTime(ms)+'</div>';fit(t,320);return}
-    if(L.mode==='clock'&&!L.churchBlank){t.classList.add('clock');t.innerHTML='<div class="tbig" id="cbig"></div><div class="tmsg" id="cdate"></div>';tickClock(true);return}
-    t.innerHTML=L.churchBlank?'':(L.church||[]).map(x=>'<div>'+esc(x)+'</div>').join('');
-    fit(t,c.size||110);
+    if(M&&!textSlide){noLyr(t);t.innerHTML='';return}
+    if(textSlide){noLyr(t);t.classList.add('tslide');t.innerHTML='<div class="stitle">'+esc(M.s.title||'')+'</div>'+(M.s.text?'<div class="stext">'+esc(M.s.text).replace(/\n/g,'<br>')+'</div>':'');fit(t,c.size||110);return}
+    if(L.mode==='timer'&&!L.churchBlank){const ms=timerLeft(L.timer);noLyr(t);t.classList.add('timer');t.innerHTML=((L.timer||{}).msg?'<div class="tmsg">'+esc(L.timer.msg)+'</div>':'')+'<div class="tbig'+(ms<=0?' done':'')+'" id="tbig">'+fmtTime(ms)+'</div>';fit(t,320);return}
+    if(L.mode==='clock'&&!L.churchBlank){noLyr(t);t.classList.add('clock');t.innerHTML='<div class="tbig" id="cbig"></div><div class="tmsg" id="cdate"></div>';tickClock(true);return}
+    swapLyrics(t,L.churchBlank?'':(L.church||[]).map(x=>'<div>'+esc(x)+'</div>').join(''),()=>fit(t,c.size||110));
   }else{
     t.style.color=s.color||'#fff';t.style.fontFamily=s.font||'Arial';
     const st=s.style||'outline',o='.045em',k='#000';
@@ -623,8 +639,7 @@ function renderOut(){
     {
       const lyr=!(L.streamBlank||!L.stream||(L.mode&&L.mode!=='song')||licStopped(S.lic));
       const ss=document.getElementById('sseal');if(ss)ss.style.display='none';
-      t.innerHTML=lyr?'<span class="sl">'+esc(L.stream).replace(/\n/g,'<br>')+'</span>':'';
-      fitStream(t,s.size||64,st==='box');
+      swapLyrics(t,lyr?'<span class="sl">'+esc(L.stream).replace(/\n/g,'<br>')+'</span>':'',()=>fitStream(t,s.size||64,st==='box'));
     }
   }
 }
@@ -691,6 +706,25 @@ if(V==='church'&&!PREVIEW){
   const go=()=>{removeEventListener('pointerdown',go);removeEventListener('keydown',go);const n=document.getElementById('fsHint');if(n)n.remove();if(!browserFs())document.documentElement.requestFullscreen().catch(()=>{})};
   addEventListener('pointerdown',go);addEventListener('keydown',go);
   addEventListener('load',()=>{if(browserFs())return;const n=document.createElement('div');n.id='fsHint';n.textContent='Click anywhere for full screen · Esc to leave · F or double-click to switch';n.style.cssText='position:fixed;top:1.5vh;left:50%;transform:translateX(-50%);z-index:99;background:rgba(0,0,0,.75);color:#fff;font:700 2.2vh Segoe UI,Arial,sans-serif;padding:.8vh 1.6vw;border-radius:1vh;pointer-events:none';document.body.appendChild(n);setTimeout(()=>n.remove(),8000)});
+}
+
+/* ---------- this laptop's control window: opens full screen; small buttons to minimise, leave full screen, close ---------- */
+function winBtns(){
+  if(V!=='control'||!LOCALPC||isPhone())return;
+  let w=document.getElementById('winb');
+  if(!w){w=document.createElement('div');w.id='winb';
+    w.innerHTML='<button title="Minimise (the toolkit keeps running)" onclick="winAct(\'min\')">—</button><button id="winfs" title="Full screen on / off (F11)" onclick="fsToggle(\'control\')">⛶</button><button class="x" title="Close the toolkit" onclick="winAct(\'close\')">✕</button>';
+    document.body.appendChild(w)}
+}
+function winAct(a){
+  if(a==='close'&&!confirm('Close the Prepfix Church Media Toolkit?\n\nThe church screen and stream close too.'))return;
+  fetch('/api/window',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({act:a})}).catch(()=>{});
+}
+if(V==='control'&&LOCALPC){
+  addEventListener('load',()=>{winBtns();
+    let done=false;try{done=sessionStorage.getItem('pfxFs')==='1';sessionStorage.setItem('pfxFs','1')}catch(e){}
+    if(!done&&!isPhone())setTimeout(()=>{if(!browserFs())fsToggle('control')},1200); // opens in full screen; the buttons above stay
+  });
 }
 
 /* ---------- Control panel ---------- */
@@ -792,9 +826,19 @@ function step(d){
   }
   pick(sg,si,li,si===ci?L.cv:undefined);scrollNow();
 }
+// with "2 lines" on, is there a pair before / after the one showing (in this song)?
+function pairMore(sg,L,d){
+  const st=stanzas(sg.text);if(!(L.songId===sg.id&&st[L.s]))return d>0;
+  const nl=(L.l||0)+d*2;if(nl>=0&&nl<st[L.s].length)return true;
+  const seq=seqOf(sg),k=seqPos(sg,L);return !!(k>=0&&seq[k+(d>0?1:-1)]);
+}
 function stepStanza(d){
   if(view==='media')return;
   const sg=song();if(!sg)return;const L=S.live||{},near=plNear(sg),seq=seqOf(sg),pos=seqPos(sg,L);
+  if(PAIRS()){ // "2 lines": the next 2 lines of the same stanza (1 if only one is left), then the next stanza
+    if(!pairMore(sg,L,d)){if(d>0&&near&&near.next){openSong(near.next.id);return}if(d<0&&near&&near.prev){openSong(near.prev.id);return}return}
+    step(d);return;
+  }
   if(near){
     if(d>0&&pos>=seq.length-1&&near.next){openSong(near.next.id);return}
     if(d<0&&pos<=0&&near.prev){openSong(near.prev.id);return}
@@ -1133,7 +1177,7 @@ function renderSide(){
   const keep=document.activeElement&&document.activeElement.id==='q';
   const ae=document.activeElement,keepB=ae&&ae.id==='pcFind'?{id:ae.id,a:ae.selectionStart,b:ae.selectionEnd}:null;
   let h='<div class="bar mobbar"><button class="pri" style="flex:1" onclick="closeSide()">Back to song</button></div>'+
-    '<div class="bar tabs"><button class="'+(tab==='songs'?'sel':'')+'" onclick="tab=\'songs\';renderSide()">Songs</button><button class="'+(tab==='pl'?'sel':'')+'" onclick="tab=\'pl\';renderSide()">Playlists</button><button class="'+(tab==='svc'?'sel':'')+'" onclick="tab=\'svc\';renderSide()">Service</button><button class="'+(tab==='media'?'sel':'')+'" onclick="tab=\'media\';renderSide()">Media</button><button class="'+(tab==='tools'?'sel':'')+'" onclick="tab=\'tools\';renderSide()">Tools</button></div>';
+    '<div class="bar tabs"><button class="'+(tab==='songs'?'sel':'')+'" onclick="tab=\'songs\';renderSide();showCurInList()">Songs</button><button class="'+(tab==='pl'?'sel':'')+'" onclick="tab=\'pl\';renderSide()">Playlists</button><button class="'+(tab==='svc'?'sel':'')+'" onclick="tab=\'svc\';renderSide()">Service</button><button class="'+(tab==='media'?'sel':'')+'" onclick="tab=\'media\';renderSide()">Media</button><button class="'+(tab==='tools'?'sel':'')+'" onclick="tab=\'tools\';renderSide()">Tools</button></div>';
   if(tab==='songs'){
     const nFav=S.songs.filter(x=>x.fav).length;
     h+='<div class="bar"><button class="pri" onclick="editSong()">New song</button><button onclick="document.getElementById(\'imp\').click()">Import songs</button><button onclick="openExport()">Export songs</button><button onclick="openDups()" title="Find songs that share the same lyrics or stanzas, keep one and delete the rest">🔍 Find duplicates</button><button onclick="renumberSongs()" title="Close the gaps left by deleted songs: number the songs 1, 2, 3…">🔢 Renumber songs</button><button onclick="openTrash()" title="Songs you deleted are kept here until you clear them">🗑 Deleted songs'+(S.trashN?' ('+S.trashN+')':'')+'</button>'+(S.songs.some(x=>x.folder==='From the team')?'<button onclick="folderPick(\'From the team\')" title="Songs added by the praise and worship team">📥 From the team ('+S.songs.filter(x=>x.folder==='From the team').length+')</button>':'')+'<input id="imp" type="file" multiple hidden onchange="importSongs(this)"></div>';
@@ -1245,8 +1289,14 @@ function renderList(){
 }
 function quickTab(t){
   if(t==='folders'){tab='songs';curFolder='';curGenre='';q='';favOnly=false;openFolder=null;sortBy='az'}else tab=t;
+  const sg=song();if(t==='songs'&&sg&&!q&&!favOnly&&!curFolder&&!curGenre)openFolder=sg.folder||'__none'; // its folder is open
   renderSide();document.getElementById('app').classList.add('open');
   const sd=document.getElementById('side');if(sd)sd.scrollTop=0;
+  if(t==='songs'||t==='pl')showCurInList();
+}
+// the song you opened last is shown in the list (in the middle), so you carry on from where you were
+function showCurInList(){
+  requestAnimationFrame(()=>{const el=document.querySelector('#side .song.cur');if(el)el.scrollIntoView({block:'center'})});
 }
 function openSong(id){curSong=id;view='song';lastOpen=id;renderSide();renderMain();closeSide();scrollTo(0,0);setLive({...S.live,open:id,openBy:DEV})}
 
@@ -1339,11 +1389,16 @@ function renderMain(){
     nav='<button onclick="step(-1)"'+(cur<=0?' disabled':'')+'>⏮ Previous slide</button><button class="pri" onclick="step(1)"'+(cur>=n-1?' disabled':'')+'>'+(cur<0?'Show slide 1':'Next slide')+' ⏭</button>';
   }else if(!isM&&sg){
     const n=seqOf(sg).length,cur=seqPos(sg,L),near=plNear(sg);
+    if(PAIRS()){const pm=pairMore(sg,L,-1),nm=pairMore(sg,L,1);
+      nav=(!pm&&near&&near.prev?'<button onclick="stepStanza(-1)" title="Key: Page Up">⏮ Previous song<small>'+esc(near.prev.title)+'</small></button>':'<button onclick="stepStanza(-1)" title="Key: Page Up"'+(pm?'':' disabled')+'>⏮ Previous 2 lines</button>')+
+        (!nm&&near&&near.next?'<button class="pri ns" onclick="stepStanza(1)" title="Key: S or Page Down">Next song ⏭<small>'+esc(near.next.title)+'</small></button>':'<button class="pri" onclick="stepStanza(1)" title="Key: S or Page Down"'+(nm?'':' disabled')+'>Next 2 lines ⏭</button>');
+    }else{
     const prevBtn=cur<=0&&near&&near.prev?'<button onclick="stepStanza(-1)" title="Key: Page Up">⏮ Previous song<small>'+esc(near.prev.title)+'</small></button>':
       '<button onclick="stepStanza(-1)" title="Key: Page Up"'+(cur<=0?' disabled':'')+'>⏮ Previous stanza</button>';
     const nextBtn=cur>=n-1&&near&&near.next?'<button class="pri ns" onclick="stepStanza(1)" title="Key: S or Page Down">Next song ⏭<small>'+esc(near.next.title)+'</small></button>':
       '<button class="pri" onclick="stepStanza(1)" title="Key: S or Page Down"'+(cur>=n-1?' disabled':'')+'>Next stanza ⏭</button>';
     nav=prevBtn+nextBtn;
+    }
   }
   const stz=!isM&&sg?(()=>{const n=stanzas(sg.text).length,cur=L.songId===sg.id&&L.s!=null?L.s:-1;const lastS=(()=>{const q=seqOf(sg),c=chorusIdx(sg);for(let i=q.length-1;i>=0;i--)if(q[i].s!==c)return q[i].s;return -1})();return cur>=0?' <span class="hint">· stanza '+(cur+1)+' of '+n+'</span>'+(cur===lastS?' <span class="lsttag">🏁 LAST STANZA</span>':''):''})():'';
   // church and stream, one above the other: what each shows now, and its own show / hide button
@@ -1366,7 +1421,7 @@ function renderMain(){
       '<select class="mob sm" onchange="songAct(this.value,this)"><option value="">⋯</option><option value="fav">'+(sg.fav?'★ Remove from favourites':'☆ Add to favourites')+'</option><option value="org">📁 Move to folder / playlist…</option><option value="edit">Edit song</option><option value="share">Share song</option>'+
       S.playlists.map(p=>'<option value="'+p.id+'">Add to '+esc(p.name)+(p.songIds.includes(sg.id)?' ✓':'')+'</option>').join('')+'<option value="__new">Add to a new playlist…</option><option value="__svc">📋 Add to service list</option><option value="del">Delete song</option></select></div>';
     h+='<div class="bar" style="margin:-4px 0 8px;align-items:center"><select style="width:auto;padding:4px 8px;font-size:13px" onchange="songFolder(this.value)"><option value="__none">📁 No folder</option>'+folderOpts(sg.folder)+'<option value="__new">+ New folder…</option></select>'+'<select style="width:auto;padding:4px 8px;font-size:13px" onchange="songGenre(this.value)"><option value="__none">🏷 No genre</option>'+genres().map(g=>'<option value="'+esc(g)+'"'+(g===sg.genre?' selected':'')+'>🏷 '+esc(g)+'</option>').join('')+'<option value="__new">+ New genre…</option></select>'+
-      (sL.length?sL.map((l,k)=>'<button class="pri" style="padding:5px 12px;font-size:13px" onclick="playPractice(\''+sg.id+'\','+k+')">▶ '+(sL.length>1?esc(l.n||'Link '+(k+1)):'Play practice song')+'</button>').join('')+'<button style="padding:5px 10px;font-size:13px" onclick="setLink()" title="Add another link, change or remove links">✎ Links</button>'+sL.map((l,k)=>/youtu/i.test(l.u)?'<button style="padding:5px 12px;font-size:13px" title="Show this video full screen on the projector so the church can sing" onclick="projYTSong(\''+sg.id+'\','+k+')">📺 '+(sL.length>1?esc(l.n||'Link '+(k+1)):'Show on projector')+'</button>':'').join('')
+      (sL.length?sL.map((l,k)=>'<button class="pri" style="padding:5px 12px;font-size:13px" onclick="playPractice(\''+sg.id+'\','+k+')">▶ '+(sL.length>1?esc(l.n||'Link '+(k+1)):'Play practice song')+'</button>').join('')+'<button style="padding:5px 10px;font-size:13px" onclick="setLink()" title="Add another link, change or remove links">✎ Links</button>'+sL.map((l,k)=>castable(l.u)?'<button style="padding:5px 12px;font-size:13px" title="Show this video full screen on the projector so the church can sing" onclick="projYTSong(\''+sg.id+'\','+k+')">📺 '+(sL.length>1?esc(l.n||'Link '+(k+1)):'Show on projector')+'</button>':'').join('')
               :'<button style="padding:5px 12px;font-size:13px" onclick="setLink()">🎧 Add practice link</button>')+'</div>';
     if(near)h+='<p class="hint" style="margin:-6px 0 10px">'+esc(near.p.name)+' · song '+(near.i+1)+' of '+near.n+(near.sec?' · <b style="color:#e0b24a">'+secLabel(near.sec)+'</b>':'')+'</p>';
     h+=(prac&&prac.id===sg.id?'<div id="pracSlot"></div>':'');
@@ -1381,7 +1436,7 @@ function renderMain(){
         '</div>'+(on?'<span class="prl">LIVE</span>':'')+'</div>'}return h};
     const lnH0=(lines,si)=>lines.map((ln,li)=>'<div class="ln '+(L.songId===sg.id&&L.s===si&&(L.l===li||(PAIRS()&&L.l+1===li))?'now':'')+'" onclick="pickAt('+si+','+li+')" title="Show this line on the screen" oncontextmenu="lineMenu(event,'+si+','+li+')" ontouchstart="lpL(event,'+si+','+li+')" ontouchend="clearTimeout(lpT)" ontouchmove="clearTimeout(lpT)"><button>'+(li+1)+'</button><span>'+l2(ln,si,li)+'</span></div>').join('');
     const lnH=(lines,si)=>PAIRS()?'<div class="prs">'+prH(lines,si)+'</div>':lnH0(lines,si);
-    h+='<div class="stzgrid">'+(st.map((lines,si)=>{const isCh=si===cIdx,isNx=si===nIdx&&!showUp;return '<div class="stz '+(isCh?'chor ':'')+(isNx?'nxt ':'')+(si===lastIdx?'lst ':'')+(jumpS===si&&jumpSong===sg.id?'jmp ':'')+(L.key===sg.id+':'+si?'live':'')+'"><h3>'+(isNx?'<span class="nxtag">NEXT ▶</span>':'')+(si===lastIdx?'<span class="lsttag">🏁 LAST STANZA</span>':'')+(isCh?'<span class="chtag">★ Chorus</span>':'<span class="stzname">Stanza '+(si+1)+'</span>')+'<button class="chb" onclick="setChorus('+si+')" title="'+(isCh?'Stop using this stanza as the chorus':'Pin this stanza above the church screen so you can show it any time')+'">'+(isCh?'Unpin chorus':'☆ Set as chorus')+'</button>'+themeBtn(sg,si)+'</h3>'+lnH(lines,si)+'</div>'+(showUp&&si===cIdx?'<div class="stz nxt up"><h3><span class="nxtag">NEXT ▶</span><span class="stzname">Stanza '+(nIdx+1)+'</span></h3>'+lnH(st[nIdx],nIdx)+'</div>':'')}).join('')||'<p class="hint">This song has no lyrics yet. Choose Edit.</p>')+'</div>';
+    h+='<div class="stzgrid">'+(st.map((lines,si)=>{const isCh=si===cIdx,isNx=si===nIdx&&!showUp;return '<div class="stz '+(isCh?'chor ':'')+(isNx?'nxt ':'')+(si===lastIdx?'lst ':'')+(jumpS===si&&jumpSong===sg.id?'jmp ':'')+(L.key===sg.id+':'+si?'live':'')+'"><h3>'+(isNx?'<span class="nxtag">NEXT ▶</span>':'')+(si===lastIdx?'<span class="lsttag">🏁 LAST STANZA</span>':'')+(isCh?'<span class="chtag">★ Chorus</span>':'<span class="stzname">Stanza '+(si+1)+'</span>')+'<button class="chb" onclick="setChorus('+si+')" title="'+(isCh?'Stop using this stanza as the chorus':'Pin this stanza above the church screen so you can show it any time')+'">'+(isCh?'Unpin chorus':'☆ Set as chorus')+'</button>'+themeBtn(sg,si)+'<button class="chb" onclick="stzEdit('+si+')" title="Change the words of this stanza – even while it is on the screen">✎ Edit</button></h3>'+lnH(lines,si)+'</div>'+(showUp&&si===cIdx?'<div class="stz nxt up"><h3><span class="nxtag">NEXT ▶</span><span class="stzname">Stanza '+(nIdx+1)+'</span></h3>'+lnH(st[nIdx],nIdx)+'</div>':'')}).join('')||'<p class="hint">This song has no lyrics yet. Choose Edit.</p>')+'</div>';
     h+='<p class="hint pc">Keyboard: / or Ctrl+K search songs, ↓ next line, ↑ previous line, → / ← jump to the next / previous stanza (then press a line number to show it), Page Down / Page Up next / previous stanza (and next / previous song in a playlist), C show the chorus, S next stanza. The “2 lines” button shows the same 2 lines on church and stream.</p>';
   }else h+='<p>Add your first song with <b>New song</b> or <b>Import songs</b>.</p>';
   m.innerHTML=h;plStripPlace();fsLabel();placeScreenPreview();renderChorusPin();syncLaptopAudio();dockPrac();
@@ -1488,7 +1543,28 @@ function spliceStanzas(from,cnt,pieces){
   S.songs=S.songs.map(x=>{if(x.id!==sg.id)return x;const y={...x,text};
     if(oi>=from&&oi<from+cnt){if(pieces.length)y.chorus=pieces[0].join('\n');else delete y.chorus} // the chorus stanza changed
     return y});
-  post({songs:S.songs});renderMain();return true;
+  post({songs:S.songs});renderMain();
+  { // the stanza on the screen was edited: church and stream change at once
+    const L=S.live||{},sg2=song();
+    if(sg2&&L.mode==='song'&&L.songId===sg2.id&&L.s!=null&&L.s>=from){
+      const ns=stanzas(sg2.text);
+      if(L.s<from+cnt){const si=Math.min(L.s,ns.length-1);if(si>=0)pick(sg2,si,Math.max(0,Math.min(L.l||0,ns[si].length-1)),L.cv)}
+      else{const si=L.s+pieces.length-cnt;if(ns[si])setLive({...L,s:si,key:sg2.id+':'+si})}
+    }
+  }
+  return true;
+}
+let stzAt=0;
+function stzEdit(si){
+  const sg=song();if(!sg)return;const l=stanzas(sg.text)[si];if(!l)return;
+  stzAt=si;stzHead.textContent=(chorusIdx(sg)===si?'Edit the chorus':'Edit stanza '+(si+1))+((S.live||{}).key===sg.id+':'+si?' — on the screen now':'');
+  stzText.value=l.join('\n');stzDlg.showModal();stzText.focus();
+}
+function stzSave(){
+  const sg=song();if(!sg)return;
+  const pieces=stzText.value.replace(/\r/g,'').split(/\n\s*\n/).map(b=>b.split('\n').map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean)).filter(b=>b.length);
+  if(!pieces.length){alert('Type the words first. (To remove a stanza, use Edit song.)');return}
+  spliceStanzas(stzAt,1,pieces);stzDlg.close();toast('Stanza saved'+((S.live||{}).songId===sg.id?' – the screen shows the new words.':'.'));
 }
 // change one line: op 'edit' (val = new words), 'del', or 'paste' (val = words, put after the line). A stanza left with no lines disappears.
 function lineOp(si,li,op,val){
@@ -1617,6 +1693,9 @@ function practiceSrc(link){
   if(h==='soundcloud.com')return {kind:'frame',src:'https://w.soundcloud.com/player/?auto_play=true&url='+encodeURIComponent(link),name:'SoundCloud',tall:true};
   if(/\.(mp3|m4a|aac|ogg|oga|wav|opus)$/i.test(u.pathname))return {kind:'audio',src:link,name:'Music'};
   if(/\.(mp4|webm|ogv|mov)$/i.test(u.pathname))return {kind:'video',src:link,name:'Video'};
+  {const m=/^(player\.)?vimeo\.com$/.test(h)&&u.pathname.match(/(\d{5,})/);if(m)return {kind:'frame',src:'https://player.vimeo.com/video/'+m[1]+'?autoplay=1',name:'Vimeo'}}
+  if(/(^|\.)facebook\.com$|^fb\.watch$/.test(h))return {kind:'frame',src:'https://www.facebook.com/plugins/video.php?autoplay=1&show_text=false&href='+encodeURIComponent(link),name:'Facebook'};
+  if(h==='drive.google.com'){const m=u.pathname.match(/\/file\/d\/([\w-]+)/);if(m)return {kind:'frame',src:'https://drive.google.com/file/d/'+m[1]+'/preview',name:'Google Drive'}}
   return {kind:'frame',src:link,name:h,other:true};
 }
 let prac=null,pracLoop=false; // prac={id,size,k,kind,name,paused,ctl}
@@ -1635,7 +1714,7 @@ function playPractice(id,k){
   box.innerHTML='<div class="phd"><span class="pt">🎧 '+esc(String(sg.title).replace(/\*/g,''))+' <span class="hint">· '+esc(lk.n||p.name)+'</span></span>'+
     (L.length>1?'<select style="width:auto;max-width:120px;padding:3px 4px;font-size:12px" onchange="playPractice(\''+sg.id+'\',this.value)" title="Other practice links">'+L.map((l,i)=>'<option value="'+i+'"'+(i===k?' selected':'')+'>'+esc(l.n||'Link '+(i+1))+'</option>').join('')+'</select>':'')+
     '<button onclick="openSong(\''+sg.id+'\')" title="Show this song\'s lyrics">Lyrics</button>'+
-    (p.name==='YouTube'?'<button onclick="pracToProj()" title="Show this video on the projector for the church">📺</button>':'')+(p.kind==='frame'?'<button onclick="pracSize()" title="Smaller / bigger">⇕</button>':'')+
+    (castable(lk.u)?'<button onclick="pracToProj()" title="Show this video on the projector for the church">📺</button>':'')+(p.kind==='frame'?'<button onclick="pracSize()" title="Smaller / bigger">⇕</button>':'')+
     '<button onclick="pracOut()" title="Open in the YouTube app or a new tab">↗</button>'+
     '<button onclick="closePractice()" title="Stop and close">✕</button></div><div class="pbody">'+media+'</div>'+
     pracCtlHtml()+(p.other?'<p class="hint" style="margin:4px 8px">If this stays blank, that website does not allow playing inside other programs – press ↗ to open it.</p>':'');
@@ -3191,16 +3270,18 @@ function cornerClock(){}
 function timerHide(){const L=S.live||{};if(L.mode==='timer')setLive({...L,mode:'song'})} // the countdown keeps running
 function timerShow(){const L=S.live||{};if(!L.timer){alert('Press Start first.');return}setLive({...L,mode:'timer',churchBlank:false})}
 /* ---- YouTube on the projector ---- */
+// a video link that can go on the projector: YouTube, Vimeo, Facebook, Google Drive or a video file (.mp4 …)
+const castable=link=>{const p=practiceSrc(link);return !!p&&(p.kind==='video'||['YouTube','Vimeo','Facebook','Google Drive'].includes(p.name))};
 function projYT(link,title){
   const p=practiceSrc(link);
-  if(!p||p.name!=='YouTube'){alert('Only YouTube links can be shown on the projector. Other links (Spotify, MP3…) play on this computer only.');return}
+  if(!p||!castable(link)){alert('This link cannot be shown on the projector. Video links from YouTube, Vimeo, Facebook, Google Drive or a video file (.mp4) can. Music links (Spotify, MP3…) play on this computer only.');return}
   closePractice();
-  const L=S.live||{},src=p.src+'&controls=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&enablejsapi=1';
-  setLive(coverVideo(L,{...L,mode:'yt',churchBlank:false,churchHide:false,yt:{src,title:title||'',k:Date.now(),n:0,cmd:'',playing:true}},true));
+  const yt=p.name==='YouTube',L=S.live||{},src=yt?p.src+'&controls=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&enablejsapi=1':p.src;
+  setLive(coverVideo(L,{...L,mode:'yt',churchBlank:false,churchHide:false,yt:{src,raw:!yt,title:title||'',k:Date.now(),n:0,cmd:'',playing:true}},true));
 }
 function projYTSong(id,k){const sg=S.songs.find(x=>x.id===id),l=sg?songLinks(sg)[k||0]:null;if(l)projYT(l.u,sg.title)}
 function pracToProj(){if(prac)projYTSong(prac.id,prac.k||0)}
-function ytFromBox(){const v=fixLink(ytUrl.value);if(!v){alert('Paste a YouTube link first (in YouTube: Share → Copy link).');return}projYT(v,'')}
+function ytFromBox(){const v=fixLink(ytUrl.value);if(!v){alert('Paste a video link first (YouTube, Vimeo, Facebook, Google Drive or .mp4).');return}projYT(v,'')}
 async function ytPasteBox(){
   try{const t=(await navigator.clipboard.readText()).trim();const m=t.match(/https?:\/\/[^\s<>"']+/i);ytUrl.value=m?m[0]:t}
   catch(e){ytUrl.focus();alert('This browser does not allow the button to read the clipboard. Tap in the box and paste with Ctrl+V (on a phone, press and hold, then Paste).')}
@@ -3229,7 +3310,7 @@ function liveDesc(L,cs){
   if(L.mode==='media')return M.type==='video'?'Video: '+esc(M.name)+(M.play?' (playing)':' (paused)'):M.type==='slides'?'Slides: '+esc(M.name)+' – '+(M.slide+1)+' of '+M.count:'Picture: '+esc(M.name);
   if(L.mode==='timer')return 'Countdown <span id="stTimer">'+fmtTime(timerLeft(L.timer))+'</span>'+((L.timer||{}).running?'':' (paused)')+' <button style="padding:2px 8px" onclick="timerHide()">Hide</button>';
   if(L.mode==='clock')return 'Clock (the time) <button style="padding:2px 8px" onclick="hideClock()">Hide</button>';
-  if(L.mode==='yt')return '📺 YouTube video'+(L.yt&&L.yt.title?': '+esc(L.yt.title):'')+' <button style="padding:2px 8px" onclick="ytCmd(\'pause\')">⏸</button><button style="padding:2px 8px" onclick="ytCmd(\'play\')">▶</button><button style="padding:2px 8px" onclick="ytStop()">⏹ Stop</button>';
+  if(L.mode==='yt')return '📺 '+(L.yt&&L.yt.raw?'Video':'YouTube video')+(L.yt&&L.yt.title?': '+esc(L.yt.title):'')+(L.yt&&L.yt.raw?' ':' <button style="padding:2px 8px" onclick="ytCmd(\'pause\')">⏸</button><button style="padding:2px 8px" onclick="ytCmd(\'play\')">▶</button>')+'<button style="padding:2px 8px" onclick="ytStop()">⏹ Stop</button>';
   return cs;
 }
 // keep the timer figures moving on the control page
@@ -3256,7 +3337,7 @@ function showYtLayer(Y){
     if(f)f.remove();
     f=document.createElement('iframe');f.dataset.k=String(Y.k);f.dataset.n=String(Y.n||0);
     f.allow='autoplay; encrypted-media; picture-in-picture; fullscreen';f.setAttribute('allowfullscreen','');f.referrerPolicy='strict-origin-when-cross-origin';
-    f.src=Y.src+'&origin='+encodeURIComponent(location.origin);el.appendChild(f);
+    f.src=Y.raw?Y.src:Y.src+'&origin='+encodeURIComponent(location.origin);el.appendChild(f);
   }
   el.style.display='block';
   if(f.dataset.n!==String(Y.n||0)){
@@ -3649,6 +3730,7 @@ if(V==='control'){
 <div id="dupRes"></div>
 <div class="bar" style="margin-top:10px"><button class="dng" id="dupDel" onclick="dupDelete()">Delete ticked</button><button onclick="dupPdf()">📄 PDF / Print</button><button class="pri" onclick="dupDlg.close()">Close</button></div></dialog>
 <dialog id="trashDlg"><h3 style="margin-top:4px">🗑 Deleted songs (backup)</h3><div id="trashBody"></div><div class="bar" id="trashBtns" style="margin-top:12px"><button onclick="trashAll('restore')">Restore all</button><button class="dng" onclick="trashAll('clear')">Clear backup…</button></div><div class="bar" style="margin-top:8px"><button class="pri" onclick="trashDlg.close()">Close</button></div></dialog>
+<dialog id="stzDlg"><h3 id="stzHead" style="margin-top:4px">Edit stanza</h3><textarea id="stzText" rows="8" style="width:min(80vw,560px);font-size:16px"></textarea><p class="hint">One line per line. A blank line makes it two stanzas. Save changes the screen at once if this stanza is showing.</p><div class="bar" style="margin-top:10px"><button class="pri" onclick="stzSave()">Save</button><button onclick="stzDlg.close()">Close</button></div></dialog>
 <dialog id="lnDlg"><h3 id="lnHead" style="margin-top:4px">Edit line</h3><input id="lnText" onkeydown="if(event.key==='Enter'){lineSave();lnDlg.close()}"><p class="hint">Press Save to keep the change. Close leaves the line as it was.</p><div class="bar" style="margin-top:10px"><button class="pri" onclick="lineSave();lnDlg.close()">Save</button><button onclick="lnDlg.close()">Close</button></div></dialog>
 <dialog id="ttlDlg"><h3 style="margin-top:4px">Edit song title</h3><input id="ttlText" onkeydown="if(event.key==='Enter'){ttlSave();ttlDlg.close()}"><p class="hint">Press Save to keep the new title. Close leaves it as it was.</p><div class="bar" style="margin-top:10px"><button class="pri" onclick="ttlSave();ttlDlg.close()">Save</button><button onclick="ttlDlg.close()">Close</button></div></dialog>
 <dialog id="edDlg" oninput="edDirty=true"><input id="edId" type="hidden"><label>Title</label><input id="edTitle"><label>Song number (change it and press Tab or Enter; if another song has it, you can swap)</label><input id="edNo" type="number" min="1" style="width:140px" onchange="edSetNo()" onkeydown="if(event.key==='Enter'){event.preventDefault();edSetNo()}"><label>Genre (for example Kikuyu, Praise, Worship)</label><input id="edGenre" list="genreList" placeholder="Choose or type a genre" autocomplete="off"><datalist id="genreList"></datalist><div class="bar" style="margin-top:8px"><button onclick="searchWeb()">Search Google for lyrics</button><button id="webBtn" onclick="webLyrics()">Get lyrics from a web link</button><button onclick="pasteLyrics()">Paste copied lyrics</button><button onclick="picIn.click()">Read lyrics from pictures</button><input id="picIn" type="file" accept="image/*" multiple hidden onchange="picLyrics(this)"></div>
