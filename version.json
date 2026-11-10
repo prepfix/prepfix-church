@@ -1,15 +1,15 @@
 {
  "product": "PREPFIX CHURCH TOOLKIT",
  "version": "V1",
- "build": "202611101159",
- "notes": "Smooth song changes, 2-line steps inside a stanza, edit a stanza while showing, video links cast to screen, window buttons",
+ "build": "202611101241",
+ "notes": "New: ALL CAPITAL LETTERS option for the lyrics (Display settings)",
  "files": {
   "0 START PREPFIX CHURCH.bat": "4e7f8979d4a9e59e24f5a841b964e0a1c50d8db5b16fd325a750bc76f67b5335",
   "HOW TO USE.txt": "67f930499faaf7ab64b32244b2685361f72126151d685690f9358bec7430a7ff",
-  "index.html": "e3729ebb6c73005e18e2596fb9d7e6b6ce48f4dec242c69b89b0309c239c6c94",
+  "index.html": "7585769f9b052aa406ceb6e689f85514373c082422f8c00242acc1517d58ef46",
   "server.js": "1cfbf68161cd5b789dfe6512b7c7031c512664ad025bcc444881bf830f97786a",
   "SETUP ON A NEW LAPTOP.txt": "38539cf9c57d37121c37e37cef02f5d7e813264663ecde3ac45d4d5e026355be",
   "Start Prepfix Church.bat": "cf8458014c572a8dc25a6364ae736b117747b074d4aa6feb1dece85680e7b68b"
  },
- "sig": "lq7fxGFLDaHGL/LQIBaNWIUZN/fj7hl4e8m45yJ3UFIJzSQ9Bfo5JHDvSxVEFBts2xM5DUdNEAhCdJ4RhFy9Cg=="
+ "sig": "gB/pr6hHIFDkwSEhG8I06rcjMsOxl/THCafjsqyUCnQ+ICr1LfIuZLF2FGz/daU1zOhrQosV4PpNaBYPbnLlDQ=="
 }

@@ -574,7 +574,7 @@ function renderOut(){
   let box=document.querySelector('.out');
   if(!box){box=document.createElement('div');box.className='out';box.innerHTML='<div class="t"></div>';document.body.appendChild(box)}
   const t=box.querySelector('.t'),L=S.live||{},c=S.settings.church||{},s=S.settings.stream||{};
-  renderAlert();t.classList.remove('timer','clock','tslide');
+  renderAlert();t.classList.remove('timer','clock','tslide');t.style.textTransform='';
   if(V==='church'){
     renderBrandMark();renderSeal();renderCornerClock();syncAudioEl(audioEl('au'),L.audio,PREVIEW);
     const DM=!!(L.churchHide||(L.churchBlank&&!c.wp)); // lyrics hidden (or wallpaper asked for and none chosen): show the PC's own wallpaper
@@ -630,9 +630,10 @@ function renderOut(){
     if(textSlide){noLyr(t);t.classList.add('tslide');t.innerHTML='<div class="stitle">'+esc(M.s.title||'')+'</div>'+(M.s.text?'<div class="stext">'+esc(M.s.text).replace(/\n/g,'<br>')+'</div>':'');fit(t,c.size||110);return}
     if(L.mode==='timer'&&!L.churchBlank){const ms=timerLeft(L.timer);noLyr(t);t.classList.add('timer');t.innerHTML=((L.timer||{}).msg?'<div class="tmsg">'+esc(L.timer.msg)+'</div>':'')+'<div class="tbig'+(ms<=0?' done':'')+'" id="tbig">'+fmtTime(ms)+'</div>';fit(t,320);return}
     if(L.mode==='clock'&&!L.churchBlank){noLyr(t);t.classList.add('clock');t.innerHTML='<div class="tbig" id="cbig"></div><div class="tmsg" id="cdate"></div>';tickClock(true);return}
+    t.style.textTransform=c.caps?'uppercase':''; // ALL CAPS (Display settings)
     swapLyrics(t,L.churchBlank?'':(L.church||[]).map(x=>'<div>'+esc(x)+'</div>').join(''),()=>fit(t,c.size||110));
   }else{
-    t.style.color=s.color||'#fff';t.style.fontFamily=s.font||'Arial';
+    t.style.color=s.color||'#fff';t.style.fontFamily=s.font||'Arial';t.style.textTransform=s.caps?'uppercase':'';
     const st=s.style||'outline',o='.045em',k='#000';
     t.style.textShadow=st==='outline'?'-'+o+' -'+o+' 0 '+k+','+o+' -'+o+' 0 '+k+',-'+o+' '+o+' 0 '+k+','+o+' '+o+' 0 '+k+',0 0 .2em '+k:st==='shadow'?'0 .04em .2em #000,0 0 .08em #000':'none';
     renderSeal();renderLower3();
@@ -3691,7 +3692,7 @@ function fillSettings(force){
     if(e.tagName==='SELECT'&&![...e.options].some(o=>o.value===String(v))){const o=document.createElement('option');o.textContent=v;e.appendChild(o)}
     e.value=v;
   });
-  cSh.checked=!!c.shadow;cWb.checked=!!c.wpBehind;cDim.checked=!!c.dim;cAuto.checked=c.autoProjector!==false;
+  cSh.checked=!!c.shadow;cCaps.checked=!!c.caps;sCaps.checked=!!(S.settings.stream||{}).caps;cWb.checked=!!c.wpBehind;cDim.checked=!!c.dim;cAuto.checked=c.autoProjector!==false;
   if(document.activeElement!==cWs)cWs.value=String(c.wpSpeed===undefined?1:c.wpSpeed);if(document.activeElement!==cWso)cWso.value=String(c.wpSoft||0);
   const src=c.wp?'/wallpaper?'+c.wp:'',cur=wpPrev.dataset.src||'';
   if(src!==cur){
@@ -3702,7 +3703,7 @@ function fillSettings(force){
   const pv=wpPrev.querySelector('video');if(pv)calmVideo(pv,c);
 }
 function saveSettings(){
-  post({settings:{church:{font:cF.value,size:+cS.value||110,color:cC.value,bg:cB.value,shadow:cSh.checked,wpBehind:cWb.checked,dim:cDim.checked,autoProjector:cAuto.checked,wpSpeed:+cWs.value,wpSoft:+cWso.value},stream:{font:sF.value,size:+sS.value||64,color:sC.value,style:sSt.value}}});
+  post({settings:{church:{font:cF.value,size:+cS.value||110,color:cC.value,bg:cB.value,shadow:cSh.checked,wpBehind:cWb.checked,dim:cDim.checked,autoProjector:cAuto.checked,caps:cCaps.checked,wpSpeed:+cWs.value,wpSoft:+cWso.value},stream:{font:sF.value,size:+sS.value||64,color:sC.value,style:sSt.value,caps:sCaps.checked}}});
 }
 function uploadWp(inp){
   const f=inp.files[0];inp.value='';if(!f)return;
@@ -3782,6 +3783,7 @@ if(V==='control'){
 <label class="chk"><input id="cWb" type="checkbox" onchange="saveSettings()"> Show the wallpaper behind the lyrics too</label>
 <label class="chk"><input id="cDim" type="checkbox" onchange="saveSettings()"> Darken the wallpaper while lyrics are showing (easier to read)</label>
 <label class="chk"><input id="cSh" type="checkbox" onchange="saveSettings()"> Soft shadow behind the letters (helps on pictures)</label>
+<label class="chk"><input id="cCaps" type="checkbox" onchange="saveSettings()"> ALL CAPITAL LETTERS for the lyrics</label>
 <p class="hint">The glowing church name and the small clock are fixed and always show.</p>
 <label class="chk"><input id="cAuto" type="checkbox" onchange="saveSettings()"> Open the church screen on the projector by itself when the app starts or a projector is connected</label>
 <h3>Stream screen</h3>
@@ -3789,6 +3791,7 @@ if(V==='control'){
 <label>Biggest text size</label><input id="sS" type="number" min="20" max="200" onchange="saveSettings()">
 <label>Text colour</label><input id="sC" type="color" onchange="saveSettings()">
 <label>Make text easy to read on video</label><select id="sSt" onchange="saveSettings()"><option value="outline">Black outline around letters</option><option value="shadow">Soft shadow</option><option value="box">Dark box behind text</option><option value="none">None (no effect)</option></select>
+<label class="chk"><input id="sCaps" type="checkbox" onchange="saveSettings()"> ALL CAPITAL LETTERS for the lyrics</label>
 <h3>About &amp; updates</h3><div id="about" class="hint" style="font-size:14px;color:#ccd"></div>
 <div class="bar" style="margin-top:8px"><button id="updBtn" onclick="checkUpdates()">Check for updates</button></div><div id="updMsg" class="hint" style="font-size:14px"></div>
 <h3>Backup &amp; restore</h3><p class="hint">One file holds everything: songs, playlists, settings, pictures, videos, slides and the wallpaper. Import it on any laptop to carry on exactly where you stopped.</p>
