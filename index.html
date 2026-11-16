@@ -325,8 +325,12 @@ main{padding:10px}#app.open main{display:none}.mobbar{display:flex}.mob{display:
 #ny .nyy{font-weight:900;font-size:30vh;line-height:1;letter-spacing:.02em}
 #ny .nyt{font-weight:800;font-size:11vh;line-height:1.1;font-variant-numeric:tabular-nums;margin-top:1vh}
 #ny.last .nyt{font-size:36vh;animation:nypulse 1s ease-out infinite}#ny.last .nyy{font-size:12vh}
-#ny .nyh{display:none;font-weight:900;font-size:13vh;line-height:1.05;animation:nyin 1.2s cubic-bezier(.2,1.6,.4,1) both}
-#ny.done .nyh{display:block}#ny.done .nyt,#ny.done .nyl{display:none}#ny.done .nyy{font-size:26vh;animation:nyin 1.6s cubic-bezier(.2,1.6,.4,1) both}
+#ny .nyh{display:none;font-weight:900;font-size:min(17vh,9.5vw);line-height:1;letter-spacing:.02em;text-align:center;white-space:nowrap;animation:nyin 1.2s cubic-bezier(.2,1.6,.4,1) both,nyglow 2.4s ease-in-out 1.2s infinite}
+#ny .nyc{display:none;font-weight:800;font-size:min(6vh,3.6vw);letter-spacing:.32em;text-transform:uppercase;margin-top:2vh;opacity:0;animation:nyfade 1.4s ease 1.4s forwards}
+#ny.done .nyh,#ny.done .nyc{display:block}#ny.done .nyt,#ny.done .nyl{display:none}#ny.done .nyy{font-size:min(34vh,22vw);animation:nyin 1.6s cubic-bezier(.2,1.6,.4,1) .25s both,nyglow 2.4s ease-in-out 1.9s infinite}
+@keyframes nyglow{0%,100%{filter:drop-shadow(0 0 1.2vh rgba(255,230,160,.55))}50%{filter:drop-shadow(0 0 4.5vh rgba(255,240,200,.95)) brightness(1.15)}}
+@keyframes nyfade{to{opacity:.95}}
+#ny .nyy{font-size:min(34vh,24vw)!important}#ny.last .nyy{font-size:12vh!important}#ny.done .nyy{font-size:min(34vh,22vw)!important}
 @keyframes nypulse{0%{transform:scale(1.18);opacity:1}100%{transform:scale(.92);opacity:.75}}
 @keyframes nyin{0%{transform:scale(.2);opacity:0}100%{transform:scale(1);opacity:1}}
 #ny.s-gold{background:radial-gradient(ellipse at center,#1a1206 0%,#000 75%);color:#ffd86b}#ny.s-gold .nyy,#ny.s-gold .nyh{background:linear-gradient(180deg,#fff3c4,#e0a82e 55%,#a8701a);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 2.4vh rgba(255,190,60,.55))}
@@ -478,7 +482,19 @@ body{font-size:17px}
 #winb{position:fixed;top:6px;right:8px;z-index:200;display:flex;gap:4px}
 #winb button{padding:3px 11px;font-size:15px;line-height:20px;background:#262b35;color:#e9e6df;border:1px solid #3a4150;border-radius:6px;opacity:.85}
 #winb button:hover{opacity:1;background:#323946}#winb button.x:hover{background:#b8392f;border-color:#b8392f}
+@media(max-width:760px){
+.status{padding:5px 6px!important;margin-bottom:8px!important}
+.srow{gap:5px!important;padding:2px 0!important}.srow+.srow{margin-top:2px!important;padding-top:3px!important}
+.srow .slab{flex:0 0 auto!important;font-size:11px!important;padding:1px 5px!important}
+.srow .sval{font-size:12.5px!important;line-height:1.25!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srow .sval b{font-weight:600}
+.srow .livebadge{padding:0 6px!important;font-size:9.5px!important;border-width:1.5px!important;gap:3px!important}
+.srow .stog{min-width:0!important;padding:5px 8px!important;font-size:11.5px!important;border-radius:8px}
+.navb{margin-top:5px!important;gap:5px!important}.navb button{padding:9px 4px!important;font-size:14px!important}
+.qnav{margin-top:5px!important;gap:4px!important}.qnav button{padding:5px 2px!important;font-size:11.5px!important;line-height:1.2;white-space:nowrap}
+}
 body.licstop #side{display:none!important}body.licstop #app{display:block}body.licstop #main{max-width:760px;margin:30px auto}
+.brand .lchip{margin-left:auto;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:700;background:#16352a;color:#7fe0b0;border:1px solid #2e6b52;white-space:nowrap}.brand .lchip.warn{background:#3a2c0e;color:#ffd37a;border-color:#7a5a1a}.brand .lchip.bad{background:#3a1512;color:#ff8a7e;border-color:#8a2e26}
 </style></head>
 <body>
 <script>
@@ -1477,7 +1493,8 @@ function renderMain(){
   const cs=(L.church&&L.church[0])?esc(L.church[0])+(L.church.length>1?' …':''):'(empty)';
   const lic=S.lic||{},sup=S.support||{};
   const bb=document.getElementById('brandbar');
-  if(bb)bb.innerHTML='<div class="brand"><img class="blogo" src="/logo.jpg" alt="Prepfix"><span class="bt">CHURCH MEDIA TOOLKIT '+esc((S.kit||{}).version||'')+'</span>'+(lic.church?'<span>·</span><span class="ch">'+esc(dispChurch(lic.church))+'</span>':'')+'</div>';
+  if(bb)bb.innerHTML='<div class="brand"><img class="blogo" src="/logo.jpg" alt="Prepfix"><span class="bt">CHURCH MEDIA TOOLKIT '+esc((S.kit||{}).version||'')+'</span>'+(lic.church?'<span>·</span><span class="ch">'+esc(dispChurch(lic.church))+'</span>':'')+
+    (lic.until&&lic.status==='ok'&&lic.days!=null?'<span class="lchip '+(lic.days<=7?'bad':lic.days<=30?'warn':'')+'" title="Pay Prepfix ('+esc(sup.phone||'')+') and enter the renewal code in Display settings → Licence">📅 Licence: '+lic.days+' day'+(lic.days===1?'':'s')+' left · until '+esc(fmtDay(lic.until))+'</span>':'')+'</div>';
   let h='';
   if(lic.message)h+='<div class="lnote">📢 <b>Message from Prepfix:</b> '+esc(lic.message)+'</div>';
   if(licStopped(lic))h+='<div class="pirate lbox"><b>'+(lic.status==='suspended'?'This toolkit has been paused by Prepfix.':'The licence ended on '+fmtDay(lic.until)+'.')+'</b> Nothing works until it is renewed: songs, media, projector, stream, phone app and team app. Your songs, playlists and settings are kept safely.<br>Pay Prepfix ('+esc(sup.phone||'')+'), then type the renewal code you receive:'+
@@ -3366,18 +3383,25 @@ function toolsSideHtml(){
     '<div class="bar" style="margin-top:6px"><button class="pri" onclick="tickerOn()">▶ Start ticker</button><button onclick="tickerOff()">■ Stop ticker</button></div>'+
     '<p class="hint" style="margin-top:6px">The words scroll from right to left along the bottom of the projector, over the lyrics. Press Enter between items.</p>')+
   card('ny','#ff9f1a','🎆 New Year countdown',
-    '<p class="hint" style="margin:0 0 6px">Counts down to midnight, 1 January '+(new Date(now()).getFullYear()+1)+' (this laptop\'s time). The projector shows the coming year big; at 0 it shows HAPPY NEW YEAR with fireworks.</p>'+
+    '<p class="hint" style="margin:0 0 6px">Counts down to midnight, 1 January of the year below (this laptop\'s time) – or from any number of seconds. The projector shows the year big; at 0 it shows your words with big fireworks.</p>'+
+    '<div class="bar"><span class="hint">Year</span><input id="nyYear" type="number" min="2000" max="2999" style="width:96px" value="'+(((L.ny||{}).year)||new Date(now()).getFullYear()+1)+'">'+
+    '<span class="hint">Words at 0</span><input id="nyWords" maxlength="40" style="flex:1;min-width:160px" value="'+esc(((L.ny||{}).words)||'HAPPY NEW YEAR')+'">'+
+    '<label class="hint" style="display:inline-flex;align-items:center;gap:4px"><input type="checkbox" id="nyChurch" style="width:auto"'+(((L.ny||{}).church===false)?'':' checked')+'> church name</label></div>'+
     '<div class="bar"><span class="hint">Look</span><select id="nyStyle" style="width:auto">'+[['gold','Gold'],['neon','Neon'],['fire','Fire'],['royal','Royal blue'],['clean','Over the wallpaper']].map(o=>'<option value="'+o[0]+'"'+(((L.ny||{}).style||'gold')===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select>'+
-    '<span class="hint">Fireworks</span><select id="nyFw" style="width:auto">'+[['mix','Mixed (all kinds)'],['burst','Classic bursts'],['willow','Golden rain'],['ring','Rings'],['palm','Palm trees'],['heart','Hearts'],['confetti','Confetti']].map(o=>'<option value="'+o[0]+'"'+(((L.ny||{}).fw||'mix')===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></div>'+
-    '<div class="bar" style="margin-top:6px"><button class="pri" onclick="nyShow(0)">👁 Show countdown</button><button onclick="nyShow(10)" title="Try it: counts down 10 seconds">🧪 Test (10 s)</button><button onclick="nyFwNow()">🎆 Fireworks now</button><button onclick="nyOff()">■ Stop</button></div>')+
+    '<span class="hint">Fireworks</span><select id="nyFw" style="width:auto">'+[['mix','Grand show (all kinds)'],['burst','Classic bursts'],['kamuro','Big gold (kamuro)'],['willow','Golden rain'],['glitter','Glitter'],['cross','Crossettes'],['ring','Rings'],['palm','Palm trees'],['heart','Hearts'],['confetti','Confetti']].map(o=>'<option value="'+o[0]+'"'+(((L.ny||{}).fw||'mix')===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></div>'+
+    '<div class="bar" style="margin-top:6px"><button class="pri" onclick="nyShow(0)">👁 Count down to midnight</button><span class="hint">or count down</span><input id="nySecs" type="number" min="3" max="86400" style="width:84px" value="'+(+(localStorage.nySecs||60))+'"><span class="hint">seconds</span><button onclick="nyShow(Math.max(3,+nySecs.value||60))">▶ Start</button></div>'+
+    '<div class="bar" style="margin-top:6px"><button onclick="nyFwNow()">🎆 Fireworks now</button><button onclick="nyOff()">■ Stop</button></div>')+
   '<p class="hint">To leave the timer or clock, tap a song line or open something in Media.</p>';
 }
 function tickerOn(){const text=kText.value.trim();if(!text){alert('Type the words for the ticker first.');return}
   setLive({...S.live,ticker:{on:true,text,speed:+kSpeed.value||2,bg:kBg.value,fg:kFg.value,stream:kStream.checked,id:Date.now()}})}
 function tickerOff(){const K=(S.live||{}).ticker;if(K)setLive({...S.live,ticker:{...K,on:false}})}
-function nyShow(test){const yr=new Date(now()).getFullYear()+1,target=test?now()+test*1000:new Date(yr,0,1).getTime();
-  setLive({...S.live,ny:{on:true,target,year:yr,style:nyStyle.value,fw:nyFw.value,fwNow:false,id:Date.now()},churchBlank:false})}
-function nyFwNow(){const N=(S.live||{}).ny||{};setLive({...S.live,ny:{...N,on:true,target:N.target||now(),year:N.year||new Date(now()).getFullYear(),style:nyStyle.value,fw:nyFw.value,fwNow:true}})}
+function nyOpts(){const yr=Math.round(+nyYear.value)||new Date(now()).getFullYear()+1;return {year:yr,words:(nyWords.value.trim()||'HAPPY NEW YEAR').slice(0,40),church:nyChurch.checked,style:nyStyle.value,fw:nyFw.value}}
+function nyShow(secs){const o=nyOpts();if(secs){try{localStorage.nySecs=secs}catch(e){}}
+  const target=secs?now()+secs*1000:new Date(o.year,0,1).getTime();
+  if(!secs&&target<=now()&&!confirm('Midnight of 1 January '+o.year+' has already passed, so it will go straight to '+o.words+'. Continue?'))return;
+  setLive({...S.live,ny:{on:true,target,...o,fwNow:false,id:Date.now()},churchBlank:false})}
+function nyFwNow(){const N=(S.live||{}).ny||{};setLive({...S.live,ny:{...N,on:true,target:N.target||now(),...nyOpts(),fwNow:true}})}
 function nyOff(){const N=(S.live||{}).ny;if(N)setLive({...S.live,ny:{...N,on:false,fwNow:false}})}
 function toolTags(){
   const L=S.live||{},on={timer:L.mode==='timer',clock:L.mode==='clock',yt:L.mode==='yt',alert:alertOn(L.alert),ticker:!!(L.ticker&&L.ticker.on),ny:!!(L.ny&&L.ny.on)};
@@ -3570,42 +3594,62 @@ function renderNY(){
   const N=(S.live||{}).ny;let el=document.getElementById('ny');
   const on=N&&N.on&&(V==='church'||V==='stream')&&!licStopped(S.lic);
   if(!on){if(el&&el.style.display!=='none'){el.style.display='none';FW.stop()}return}
-  if(!el){el=document.createElement('div');el.id='ny';el.innerHTML='<canvas></canvas><div class="nyw"><div class="nyl">COUNTDOWN TO</div><div class="nyh">HAPPY NEW YEAR</div><div class="nyy"></div><div class="nyt"></div></div>';document.body.appendChild(el)}
+  if(!el){el=document.createElement('div');el.id='ny';el.innerHTML='<canvas></canvas><div class="nyw"><div class="nyl">COUNTDOWN TO</div><div class="nyh"></div><div class="nyy"></div><div class="nyc"></div><div class="nyt"></div></div>';document.body.appendChild(el)}
   const left=N.target-now(),done=left<=0,last=!done&&left<=10000,cls='s-'+(N.style||'gold')+(done?' done':last?' last':'');
   if(el.className!==cls)el.className=cls;
   const y=String(N.year||''),yy=el.querySelector('.nyy'),tt=el.querySelector('.nyt'),tx=done?'':nyFmt(left);
   if(yy.textContent!==y)yy.textContent=y;if(tt.textContent!==tx)tt.textContent=tx;
+  const hw=String(N.words||'HAPPY NEW YEAR'),hc=N.church!==false?String((S.lic&&S.lic.church)||''):'',he=el.querySelector('.nyh'),ce=el.querySelector('.nyc');
+  if(he.textContent!==hw)he.textContent=hw;if(ce.textContent!==hc)ce.textContent=hc;
   el.style.display='flex';
   if(done||N.fwNow)FW.start(el.querySelector('canvas'),N.fw||'mix');else FW.stop();
 }
-// fireworks: rockets rise and burst. Types: classic bursts, golden rain, rings, palms, hearts, confetti, or a mix.
-const FW={cv:null,ctx:null,raf:0,on:false,type:'mix',P:[],R:[],next:0,
-  start(cv,type){this.type=type;if(this.on&&this.cv===cv)return;this.cv=cv;this.ctx=cv.getContext('2d');this.on=true;this.P=[];this.R=[];this.next=0;const loop=t=>{if(!this.on)return;this.frame(t);this.raf=requestAnimationFrame(loop)};this.raf=requestAnimationFrame(loop)},
+// fireworks: big modern show. Rockets climb with sparks and burst across the screen; a grand finale in the first
+// seconds. Types: classic peony, golden rain, rings, palms, hearts, glitter, crossette, kamuro (huge gold), confetti, mix.
+const FW={cv:null,ctx:null,raf:0,on:false,type:'mix',P:[],R:[],next:0,t0:0,
+  start(cv,type){this.type=type;if(this.on&&this.cv===cv)return;this.cv=cv;this.ctx=cv.getContext('2d');this.on=true;this.P=[];this.R=[];this.next=0;this.t0=0;const loop=t=>{if(!this.on)return;this.frame(t);this.raf=requestAnimationFrame(loop)};this.raf=requestAnimationFrame(loop)},
   stop(){if(!this.on)return;this.on=false;cancelAnimationFrame(this.raf);if(this.ctx)this.ctx.clearRect(0,0,this.cv.width,this.cv.height)},
-  pick(){const T=['burst','willow','ring','palm','heart'];return this.type==='mix'?T[Math.random()*T.length|0]:this.type},
-  hue(){return Math.random()*360|0},
-  launch(W,H){const k=this.pick();if(k==='confetti'){for(let i=0;i<(PREVIEW?20:60);i++)this.P.push({k:'c',x:Math.random()*W,y:-20-Math.random()*H*.3,vx:(Math.random()-.5)*2,vy:2+Math.random()*3,r:Math.random()*6,vr:(Math.random()-.5)*.3,w:8+Math.random()*8,h:5+Math.random()*6,col:'hsl('+this.hue()+',90%,60%)',life:600});return}
-    this.R.push({x:W*(.15+Math.random()*.7),y:H,vx:(Math.random()-.5)*2,vy:-(H*.012+Math.random()*H*.006),ty:H*(.15+Math.random()*.35),k,h:this.hue()})},
-  burst(r){const N=r.k==='willow'?110:r.k==='ring'?70:r.k==='palm'?14:r.k==='heart'?80:100,m=PREVIEW?.45:1,sc=Math.min(this.cv.width,this.cv.height)/420;
-    for(let i=0;i<N*m;i++){let a=Math.PI*2*i/(N*m),sp,col,life=70+Math.random()*30,g=.05,dr=.985;
-      if(r.k==='ring'){sp=6*sc;col='hsl('+(i%2?r.h:(r.h+180)%360)+',100%,62%)'}
-      else if(r.k==='willow'){a=Math.random()*Math.PI*2;sp=Math.random()*4*sc;col='hsl(42,100%,'+(55+Math.random()*25)+'%)';life=140+Math.random()*60;g=.025;dr=.975}
-      else if(r.k==='palm'){sp=(5+Math.random())*sc;col='hsl('+r.h+',100%,60%)';life=110;g=.06}
-      else if(r.k==='heart'){const t=a,hx=16*Math.pow(Math.sin(t),3),hy=-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t));this.P.push({k:'p',x:r.x,y:r.y,px:r.x,py:r.y,vx:hx*.38*sc,vy:hy*.38*sc,g:.02,dr:.97,col:'hsl('+(330+Math.random()*30)+',100%,62%)',life:95,max:95,w:4});continue}
-      else{a=Math.random()*Math.PI*2;sp=Math.random()*7*sc;col='hsl('+(r.h+Math.random()*40-20)+',100%,'+(55+Math.random()*20)+'%)'}
-      this.P.push({k:'p',x:r.x,y:r.y,px:r.x,py:r.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,g,dr,col,life,max:life,w:r.k==='palm'?7:3.6})}
-    this.P.push({k:'f',x:r.x,y:r.y,life:10,max:10,rad:60*sc,h:r.h})},
+  pick(){const T=['burst','willow','ring','palm','heart','glitter','cross','kamuro','burst','ring'];return this.type==='mix'?T[Math.random()*T.length|0]:this.type},
+  hue(){const H=[0,18,42,55,120,165,190,215,265,290,320];return H[Math.random()*H.length|0]+(Math.random()*14-7)},
+  launch(W,H,x){const k=this.pick();if(k==='confetti'){for(let i=0;i<(PREVIEW?24:90);i++)this.P.push({k:'c',x:Math.random()*W,y:-20-Math.random()*H*.3,vx:(Math.random()-.5)*2.4,vy:2+Math.random()*3.4,r:Math.random()*6,vr:(Math.random()-.5)*.3,w:10+Math.random()*10,h:6+Math.random()*7,col:'hsl('+this.hue()+',95%,62%)',life:700});return}
+    const big=k==='kamuro'||Math.random()<.2;
+    this.R.push({x:x!=null?x:W*(.08+Math.random()*.84),y:H+10,vx:(Math.random()-.5)*2.2,vy:-(H*.0135+Math.random()*H*.0065),ty:H*(big?.1+Math.random()*.18:.12+Math.random()*.38),k,h:this.hue(),big})},
+  spark(x,y,vx,vy,col,life,w,g,dr,tw){this.P.push({k:'p',x,y,px:x,py:y,vx,vy,g:g==null?.05:g,dr:dr||.982,col,life,max:life,w:w||3.6,tw:!!tw})},
+  burst(r){const m=PREVIEW?.4:1,sc=Math.min(this.cv.width,this.cv.height)/300*(r.big?1.45:1),h=r.h,h2=(h+150+Math.random()*60)%360;
+    const N=Math.round({willow:150,ring:90,palm:16,heart:90,glitter:130,cross:26,kamuro:190,burst:140}[r.k]*m)||100;
+    for(let i=0;i<N;i++){let a=Math.PI*2*i/N,sp,col,life=80+Math.random()*35,g=.045,dr=.982,w=3.8,tw=false;
+      if(r.k==='ring'){sp=6.5*sc;col='hsl('+(i%2?h:h2)+',100%,64%)';w=4.4}
+      else if(r.k==='willow'){a=Math.random()*Math.PI*2;sp=Math.random()*4.4*sc;col='hsl(44,100%,'+(58+Math.random()*25)+'%)';life=170+Math.random()*70;g=.022;dr=.972;w=3}
+      else if(r.k==='kamuro'){a=Math.random()*Math.PI*2;sp=(2+Math.random()*4.5)*sc;col='hsl(40,100%,'+(62+Math.random()*25)+'%)';life=200+Math.random()*80;g=.02;dr=.975;w=3.2;tw=true}
+      else if(r.k==='palm'){sp=(5.5+Math.random())*sc;col='hsl('+h+',100%,62%)';life=120;g=.06;w=8}
+      else if(r.k==='glitter'){a=Math.random()*Math.PI*2;sp=Math.random()*6.5*sc;col='hsl('+(Math.random()<.5?h:50)+',100%,'+(70+Math.random()*20)+'%)';life=110+Math.random()*50;tw=true;w=3}
+      else if(r.k==='cross'){sp=5*sc;col='hsl('+h+',100%,66%)';life=45;w=5;this.P.push({k:'x',x:r.x,y:r.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:42,h,sc});continue}
+      else if(r.k==='heart'){const t=a,hx=16*Math.pow(Math.sin(t),3),hy=-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t));this.spark(r.x,r.y,hx*.42*sc,hy*.42*sc,'hsl('+(335+Math.random()*25)+',100%,64%)',105,4.4,.018,.968);continue}
+      else{a=Math.random()*Math.PI*2;const s2=Math.random();sp=(s2<.5?s2*1.4:.7+s2*.3)*8*sc;col='hsl('+(i%3?h:h2)+',100%,'+(58+Math.random()*20)+'%)'}
+      this.spark(r.x,r.y,Math.cos(a)*sp,Math.sin(a)*sp,col,life,w,g,dr,tw)}
+    if(r.k==='burst'||r.k==='ring'){for(let i=0;i<30*m;i++){const a=Math.random()*Math.PI*2,sp=Math.random()*2.4*sc;this.spark(r.x,r.y,Math.cos(a)*sp,Math.sin(a)*sp,'hsl(50,100%,92%)',60,2.4,.03,.97,true)}}
+    this.P.push({k:'f',x:r.x,y:r.y,life:14,max:14,rad:(r.big?150:95)*sc,h})},
   frame(t){const cv=this.cv,c=this.ctx,W=cv.clientWidth,H=cv.clientHeight;if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H}
+    if(!this.t0)this.t0=t;const fin=t-this.t0<9000&&this.type!=='confetti';
     c.clearRect(0,0,W,H);c.globalCompositeOperation='lighter';
-    if(t>this.next){this.launch(W,H);if(Math.random()<.35)this.launch(W,H);this.next=t+(this.type==='confetti'?1400:300+Math.random()*450)}
-    for(let i=this.R.length-1;i>=0;i--){const r=this.R[i],px=r.x,py=r.y;r.x+=r.vx;r.y+=r.vy;r.vy+=.12;c.strokeStyle='hsl('+r.h+',100%,80%)';c.lineWidth=4;c.beginPath();c.moveTo(px,py);c.lineTo(r.x,r.y);c.stroke();if(r.y<=r.ty||r.vy>=0){this.burst(r);this.R.splice(i,1)}}
+    if(t>this.next){
+      if(fin){const n=3+(Math.random()*3|0);for(let i=0;i<n;i++)this.launch(W,H,W*(i+.5)/n+(Math.random()-.5)*W*.08);this.next=t+420+Math.random()*260}
+      else{this.launch(W,H);if(Math.random()<.55)this.launch(W,H);if(Math.random()<.2)this.launch(W,H);this.next=t+(this.type==='confetti'?1400:260+Math.random()*380)}}
+    for(let i=this.R.length-1;i>=0;i--){const r=this.R[i],px=r.x,py=r.y;r.x+=r.vx;r.y+=r.vy;r.vy+=.11;
+      c.strokeStyle='hsl('+r.h+',100%,85%)';c.lineWidth=r.big?6:4.5;c.lineCap='round';c.beginPath();c.moveTo(px,py);c.lineTo(r.x,r.y);c.stroke();
+      if(Math.random()<.8)this.spark(r.x,r.y,(Math.random()-.5)*1.2,Math.random()*1.5,'hsl(40,100%,'+(60+Math.random()*30)+'%)',22+Math.random()*16,2.2,.04,.96);
+      if(r.y<=r.ty||r.vy>=0){this.burst(r);this.R.splice(i,1)}}
     for(let i=this.P.length-1;i>=0;i--){const p=this.P[i];
-      if(p.k==='f'){const a=p.life/p.max,gr=c.createRadialGradient(p.x,p.y,0,p.x,p.y,p.rad);gr.addColorStop(0,'hsla('+p.h+',100%,85%,'+(.55*a)+')');gr.addColorStop(1,'hsla('+p.h+',100%,60%,0)');c.fillStyle=gr;c.beginPath();c.arc(p.x,p.y,p.rad,0,7);c.fill();if(--p.life<=0)this.P.splice(i,1);continue}
+      if(p.k==='f'){const a=p.life/p.max,gr=c.createRadialGradient(p.x,p.y,0,p.x,p.y,p.rad);gr.addColorStop(0,'hsla('+p.h+',100%,92%,'+(.75*a)+')');gr.addColorStop(.35,'hsla('+p.h+',100%,70%,'+(.3*a)+')');gr.addColorStop(1,'hsla('+p.h+',100%,60%,0)');c.fillStyle=gr;c.beginPath();c.arc(p.x,p.y,p.rad,0,7);c.fill();if(--p.life<=0)this.P.splice(i,1);continue}
+      if(p.k==='x'){p.x+=p.vx;p.y+=p.vy;p.vx*=.97;p.vy=p.vy*.97+.04;c.fillStyle='hsl('+p.h+',100%,75%)';c.beginPath();c.arc(p.x,p.y,3,0,7);c.fill();
+        if(--p.life<=0){for(let j=0;j<4;j++){const a=Math.PI/2*j+Math.random()*.3;this.spark(p.x,p.y,Math.cos(a)*3*p.sc,Math.sin(a)*3*p.sc,'hsl('+((p.h+40)%360)+',100%,68%)',55,3,.04,.975)}this.P.splice(i,1)}continue}
       if(p.k==='c'){p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;p.life--;c.globalCompositeOperation='source-over';c.save();c.translate(p.x,p.y);c.rotate(p.r);c.fillStyle=p.col;c.fillRect(-p.w/2,-p.h/2,p.w,p.h);c.restore();c.globalCompositeOperation='lighter';if(p.y>H+20||p.life<0)this.P.splice(i,1);continue}
       p.px=p.x;p.py=p.y;p.vx*=p.dr;p.vy=p.vy*p.dr+p.g;p.x+=p.vx;p.y+=p.vy;p.life--;
-      c.globalAlpha=Math.max(0,p.life/p.max);c.strokeStyle=p.col;c.lineWidth=p.w;c.lineCap='round';c.beginPath();c.moveTo(p.px-(p.x-p.px)*1.5,p.py-(p.y-p.py)*1.5);c.lineTo(p.x,p.y);c.stroke();
+      let a=Math.max(0,p.life/p.max);if(p.tw)a*=Math.random()<.35?1:.25;
+      c.globalAlpha=a;c.strokeStyle=p.col;c.lineWidth=p.w;c.lineCap='round';c.beginPath();c.moveTo(p.px-(p.x-p.px)*2.2,p.py-(p.y-p.py)*2.2);c.lineTo(p.x,p.y);c.stroke();
+      if(a>.5&&p.w>2.5){c.globalAlpha=a*.9;c.fillStyle='#fff';c.beginPath();c.arc(p.x,p.y,p.w*.45,0,7);c.fill()}
       if(p.life<=0)this.P.splice(i,1)}
-    c.globalAlpha=1;if(this.P.length>2500)this.P.splice(0,this.P.length-2500)}};
+    c.globalAlpha=1;if(this.P.length>4200)this.P.splice(0,this.P.length-4200)}};
 // countdown on the stream: a lower third across the bottom
 function renderLower3(){
   const L=S.live||{};let el=document.getElementById('l3');
