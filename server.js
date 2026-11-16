@@ -19,7 +19,7 @@ try { KIT = { ...KIT, ...JSON.parse(fs.readFileSync(KIT_FILE, 'utf8')) }; } catc
 // Old licences (made before dates were used) last one year from the day they were made.
 // State that changes on this computer (latest date seen, suspension, message from Prepfix) is kept in licence-state.json.
 const STATE_FILE = path.join(DIR, 'licence-state.json');
-const DAY = 86400000, WARN_DAYS = 7, GRACE_DAYS = 7;
+const DAY = 86400000, WARN_DAYS = 30, GRACE_DAYS = 0;   // the day after the last paid day, everything stops
 let LSTATE = { seen: 0, suspended: false, message: '', checked: 0 };
 try { LSTATE = { ...LSTATE, ...JSON.parse(fs.readFileSync(STATE_FILE, 'utf8')) }; } catch (e) {}
 const saveState = () => { try { fs.writeFileSync(STATE_FILE, JSON.stringify(LSTATE, null, 1)); } catch (e) {} };
@@ -126,7 +126,7 @@ function teamSongs() {
   // members see each song with the same number as in the main toolkit ("72. Mwokozi Umeokoa"), numbered songs first in number order
   const numOf = s => { const n = parseInt(s.no, 10); return n > 0 ? n : 0; };
   const list = (data.songs || []).slice().sort((a, b) => (numOf(a) || 1e9) - (numOf(b) || 1e9) || String(a.title).localeCompare(String(b.title), undefined, { sensitivity: 'base' }));
-  const songs = list.map(s => { const n = numOf(s), o = { i: s.id, t: n ? n + '. ' + s.title : s.title, x: s.text }; if (n) o.no = n; if (s.link) o.l = s.link; if (Array.isArray(s.links) && s.links.length && (s.links.length > 1 || s.links[0].n)) o.ls = s.links.map(l => [l.u, l.n || '']); if (s.folder) o.f = s.folder; return o; });
+  const songs = list.map(s => { const n = numOf(s), o = { i: s.id, t: n ? n + '. ' + s.title : s.title, x: s.text }; if (n) o.no = n; if (s.link) o.l = s.link; if (Array.isArray(s.links) && s.links.length && (s.links.length > 1 || s.links[0].n)) o.ls = s.links.map(l => [l.u, l.n || '']); if (s.folder) o.f = s.folder; if (s.lang) o.lg = s.lang; if (s.genre) o.g = s.genre; return o; });
   const folders = (data.settings && data.settings.folders) || [];
   return { songs, folders, hash: crypto.createHash('sha1').update(JSON.stringify([songs, folders])).digest('hex') };
 }
@@ -181,7 +181,8 @@ async function teamSync(claim, retry) {
     const t = teamSongs();
     const body = { action: 'teamSync', id: L.id, church: L.church || '', key: TEAM.key, claim: !!claim, pin: cfg.pin || '', computer: os.hostname(), ack: TEAM.got,
       members: membersOut(L.id), free: TEAM.free || [] };
-    if (t.hash !== TEAM.hash || claim) Object.assign(body, { songs: t.songs, folders: t.folders, hash: t.hash });
+    const forceFull = !TEAM.lastFull || Date.now() - TEAM.lastFull > 3 * 3600e3;   // every 3 hours send everything again, so the sheet can never stay wrong for long
+    if (t.hash !== TEAM.hash || claim || forceFull) Object.assign(body, { songs: t.songs, folders: t.folders, hash: t.hash });
     const r = await fetch(KIT.checkin, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(body), redirect: 'follow', signal: AbortSignal.timeout(60000) });
     const j = await r.json();
     if (j.error && /not found/i.test(j.error) && !retry) { TEAM.sending = false; await checkin(); return teamSync(claim, true); } // not yet in Prepfix's sheet: check in first
@@ -189,7 +190,9 @@ async function teamSync(claim, retry) {
       if (/suspend|no longer active/i.test(j.error) && !LSTATE.suspended) { TEAM.sending = false; await checkin(); } } // Prepfix paused this church: stop within minutes
     else {
       if (LSTATE.suspended) setTimeout(checkin, 1000);                                  // Prepfix set the church Active again
-      TEAM.error = ''; TEAM.key = j.key || TEAM.key; TEAM.hash = j.hash || ''; TEAM.last = Date.now();
+      TEAM.error = ''; TEAM.key = j.key || TEAM.key; TEAM.last = Date.now();
+      const sheetOk = j.hash === t.hash && (j.n === undefined || j.n === t.songs.length);   // the sheet must report the SAME songs we hold, else send again next minute
+      TEAM.hash = sheetOk ? j.hash : ''; if (sheetOk && body.songs) TEAM.lastFull = Date.now();
       TEAM.free = []; if (Array.isArray(j.members)) TEAM.mstatus = j.members;
       const got = new Set(TEAM.got), news = [];
       for (const x of j.inbox || []) if (!got.has(x.pid)) news.push(teamPlaylist(x));
@@ -265,6 +268,7 @@ function writeNow() {
   const json = JSON.stringify(data, null, 1), tmp = FILE + '.tmp';
   try { fs.writeFileSync(tmp, json); fs.renameSync(tmp, FILE); }
   catch (e) { try { fs.writeFileSync(FILE, json); } catch (e2) { console.error('Could not save data.json: ' + e2.message); } }
+  try { cloudSoon(); } catch (e) {}   // tell the other laptops (online songs)
 }
 // ---------- permanent song numbers ----------
 // Every song has a number (song.no). It never changes and is never given to another song: adding, deleting,
@@ -288,10 +292,186 @@ if (numberSongs()) writeNow(); // existing libraries get their numbers the first
 ['SIGINT', 'SIGTERM', 'SIGHUP'].forEach(sig => process.on(sig, () => shutdownAll()));
 process.on('exit', () => { if (saveTimer) writeNow(); });
 
+// ---------- ONLINE SONGS: the same songs, playlists and settings on every laptop that runs this church's toolkit ----------
+// Each laptop sends what changed on it and receives what changed on the others (about every minute, and a few seconds
+// after any change). The last change wins. Pictures, videos and slides stay on each laptop. The team members' list
+// and PINs (settings.team) never travel - they stay with the laptop that serves the Team App.
+const CLOUD_FILE = path.join(DIR, 'online-songs.json'), CLOUD_SKIP = ['team', 'bibleOpts', 'bibQ'];
+// CHURCH PASSWORD: lk = this laptop's key from the Google sheet (given once the password was typed here), pwh = a scrambled
+// copy of the password so the toolkit can check it without internet (before deleting songs, restoring a backup...).
+let CLOUD = { on: true, joined: false, rev: 0, base: {}, last: 0, error: '', busy: false, got: 0, sent: 0, lk: '', pwh: '', needPw: false, unlockUntil: 0 };
+try { Object.assign(CLOUD, JSON.parse(fs.readFileSync(CLOUD_FILE, 'utf8')), { busy: false, error: '', unlockUntil: 0 }); } catch (e) {}
+const saveCloud = () => { try { const { busy, error, unlockUntil, applying, ...k } = CLOUD; fs.writeFileSync(CLOUD_FILE, JSON.stringify(k)); } catch (e) {} };
+const pwHashLocal = pw => crypto.createHash('sha256').update(String(readLicense().id || '') + '|church-pw|' + String(pw)).digest('hex');
+const cHash = o => crypto.createHash('sha1').update(JSON.stringify(o)).digest('base64').slice(0, 18);
+function cloudItems() {
+  const m = {};
+  for (const x of data.songs || []) if (x && x.id) m['s:' + x.id] = x;
+  for (const x of data.playlists || []) if (x && x.id) m['p:' + x.id] = x;
+  const st = {}; for (const k in data.settings || {}) if (!CLOUD_SKIP.includes(k)) st[k] = data.settings[k];
+  m.set = st;
+  if (goodNo(data.songSeq)) m.seq = { n: data.songSeq };   // the highest song number ever used, so no laptop gives an old number again
+  return m;
+}
+// two laptops gave the same new number to different songs: the song with the smaller id keeps it, the other gets the next free number
+function fixNoClash() {
+  let seq = goodNo(data.songSeq) ? data.songSeq : 0; for (const x of data.songs) if (goodNo(x.no) && x.no > seq) seq = x.no;
+  const used = new Set(); let changed = false;
+  for (const x of data.songs.slice().sort((a, b) => String(a.id) < String(b.id) ? -1 : 1)) {
+    if (!goodNo(x.no)) continue;
+    if (used.has(x.no)) { x.no = ++seq; changed = true; } used.add(x.no);
+  }
+  if (changed) data.songSeq = seq;
+  return changed;
+}
+function cloudApply(items, gone) {
+  let n = 0; const now = Date.now();
+  const songs = new Map((data.songs || []).map(x => [x.id, x])), pls = new Map((data.playlists || []).map(x => [x.id, x]));
+  for (const k in items) {
+    const v = items[k]; if (!v || typeof v !== 'object') continue;
+    if (k === 'set') { const keep = {}; CLOUD_SKIP.forEach(x => { if (data.settings && x in data.settings) keep[x] = data.settings[x]; });
+      data.settings = { ...v, ...keep, church: { ...DEFAULTS.church, ...(v.church || {}) }, stream: { ...DEFAULTS.stream, ...(v.stream || {}) } }; n++; }
+    else if (k === 'seq') { if (goodNo(v.n) && !(v.n <= data.songSeq)) data.songSeq = v.n; }
+    else if (k.startsWith('s:')) { songs.set(k.slice(2), v); n++; }
+    else if (k.startsWith('p:')) { pls.set(k.slice(2), v); n++; }
+  }
+  let trashed = false;
+  for (const k of gone || []) {
+    const id = k.slice(2);
+    if (k.startsWith('s:') && songs.has(id)) { const x = songs.get(id); TRASH = TRASH.filter(t => t.id !== id); TRASH.push({ ...x, deletedAt: now, wasIn: [] }); songs.delete(id); trashed = true; n++; }  // deleted on another laptop: kept in "Deleted songs"
+    else if (k.startsWith('p:') && pls.delete(id)) n++;
+  }
+  data.songs = [...songs.values()]; data.playlists = [...pls.values()];
+  if (trashed) saveTrash();
+  return n;
+}
+let cloudTimer = null;
+const cloudSoon = () => { if (CLOUD.on && !CLOUD.applying) { clearTimeout(cloudTimer); cloudTimer = setTimeout(() => cloudSync(), 5000); } };
+async function cloudSync() {
+  const L = readLicense();
+  if (!CLOUD.on || !KIT.checkin || !L.id || !['ok', 'expired'].includes(LIC.status)) return;
+  if (CLOUD.busy) return cloudSoon();
+  CLOUD.busy = true;
+  try {
+    const first = !CLOUD.joined, cur = cloudItems(), push = { items: {}, gone: [] };
+    if (!first) {   // the first time on a laptop: take the online library first (it wins), then send what only this laptop has
+      for (const k in cur) { const h = cHash(cur[k]); if (CLOUD.base[k] !== h) push.items[k] = cur[k]; }
+      for (const k in CLOUD.base) if (!(k in cur)) push.gone.push(k);
+    }
+    // SAFETY: most of the songs suddenly missing on this laptop (a damaged or emptied copy) is never sent as "deleted":
+    // the laptop takes the church's songs back from the online copy instead
+    const isS = k => k.slice(0, 2) === 's:', goneS = push.gone.filter(isS).length, hadS = Object.keys(CLOUD.base).filter(isS).length;
+    if (goneS > 20 && goneS > hadS * 0.5) return relinkCloud('most of the songs are missing on this laptop');
+    const body = { action: 'libSync', id: L.id, church: L.church || '', computer: os.hostname(), since: CLOUD.rev, push, lk: CLOUD.lk || undefined };
+    const r = await fetch(KIT.checkin, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(body), redirect: 'follow', signal: AbortSignal.timeout(180000) });
+    const j = await r.json();
+    if (j.error === 'busy') { CLOUD.error = ''; CLOUD.busy = false; return setTimeout(() => cloudSync(), 15000 + Math.random() * 15000); }   // very busy online: a little later
+    if (j.error === 'big-delete') return relinkCloud('the online copy refused to delete most of the songs');
+    if (j.error) CLOUD.error = String(j.error);                         // 'login' = this laptop needs the church password
+    else if (j.reset) { CLOUD.joined = false; CLOUD.rev = 0; CLOUD.base = {}; saveCloud(); CLOUD.busy = false; return setTimeout(() => cloudSync(), 1000); }
+    else {
+      CLOUD.needPw = !!j.needPw;
+      if (j.needPw && CLOUD.pwh) { CLOUD.pwh = ''; CLOUD.lk = ''; console.log('  Online songs: the church password was reset - make a new one in Settings.'); }
+      for (const k in push.items) CLOUD.base[k] = cHash(push.items[k]);
+      push.gone.forEach(k => delete CLOUD.base[k]);
+      CLOUD.sent += Object.keys(push.items).length + push.gone.length;
+      let n = 0;
+      if (!j.same) {
+        CLOUD.applying = true;
+        try {
+          n = cloudApply(j.items || {}, j.gone || []);
+          const now = cloudItems();
+          for (const k in j.items || {}) if (now[k]) CLOUD.base[k] = cHash(now[k]);
+          (j.gone || []).forEach(k => delete CLOUD.base[k]);
+          if (n) { fixNoClash(); save(); pushData(); if (typeof teamLater === 'function') teamLater(); }
+        } finally { CLOUD.applying = false; }
+        CLOUD.got += n;
+        if (n) console.log('  Online songs: ' + n + ' change' + (n > 1 ? 's' : '') + ' from the other laptop(s).');
+      }
+      CLOUD.rev = Number(j.rev) || 0; CLOUD.error = ''; CLOUD.last = Date.now();
+      if (first) { CLOUD.joined = true; console.log('  Online songs: this laptop is now linked to ' + (L.church || 'the church') + '\'s online library.'); setTimeout(() => cloudSync(), 3000); }
+      saveCloud(); pushCloud();
+    }
+  } catch (e) { CLOUD.error = 'offline'; }
+  CLOUD.busy = false;
+  pushCloud();
+}
+function relinkCloud(why) {
+  console.log('  Online songs: ' + why + ' - taking the church\'s songs from the online copy.');
+  CLOUD.joined = false; CLOUD.rev = 0; CLOUD.base = {}; saveCloud(); CLOUD.busy = false;
+  setTimeout(() => cloudSync(), 1000);
+}
+// church password: sign this laptop in (or make the password, if the church has none yet), or change it
+async function cloudPw(action, q) {
+  const L = readLicense();
+  if (!KIT.checkin || !L.id) return { error: 'Needs a licensed toolkit.' };
+  try {
+    const body = { action, id: L.id, church: L.church || '', computer: os.hostname(), pw: String(q.pw || ''), old: q.old != null ? String(q.old) : undefined, lk: CLOUD.lk || undefined };
+    const r = await fetch(KIT.checkin, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(body), redirect: 'follow', signal: AbortSignal.timeout(60000) });
+    const j = await r.json();
+    if (!j.ok || !j.lk) return { error: j.error || 'failed' };
+    const pwhWas = CLOUD.pwh;
+    CLOUD.lk = j.lk; CLOUD.pwh = pwHashLocal(q.pw); CLOUD.needPw = false; CLOUD.unlockUntil = Date.now() + 15 * 60e3;
+    if (CLOUD.pwh !== pwhWas) setTimeout(relock, 800);   // new / changed password: pages signed in with the old one must log in again
+    if (CLOUD.error === 'login') CLOUD.error = '';
+    saveCloud(); setTimeout(() => cloudSync(), 500);
+    return { ok: 1, created: !!j.created };
+  } catch (e) { return { error: 'offline' }; }
+}
+// before deleting songs, restoring a backup...: the password checked on this laptop (works without internet)
+async function cloudCheck(pw) {
+  if (CLOUD.pwh) { if (pwHashLocal(pw) === CLOUD.pwh) { CLOUD.unlockUntil = Date.now() + 15 * 60e3; return { ok: 1 }; } return { error: 'wrong' }; }
+  if (CLOUD.needPw || !CLOUD.joined) return { ok: 1, none: 1 };     // no church password made yet
+  return cloudPw('libLogin', { pw });                                // made on another laptop: check it online once
+}
+const cloudStatus = () => ({ on: CLOUD.on, joined: CLOUD.joined, last: CLOUD.last, error: CLOUD.error, ready: !!(KIT.checkin && readLicense().id), songs: (data.songs || []).length,
+  needPw: !!CLOUD.needPw, pwSet: !!CLOUD.pwh || (CLOUD.joined && !CLOUD.needPw && CLOUD.error === 'login'), unlocked: Date.now() < CLOUD.unlockUntil, login: loginNeeded() });
+const pushCloud = () => clients.forEach(c => c.full && send(c, 'cloud', cloudStatus()));
+// ---------- LOGIN: once the church has a password, the control page (on this laptop or a phone) asks for it ----------
+// Each computer / phone stays signed in for 30 days (renewed every time it is used), so projecting on Sunday is not
+// blocked. The church screen (projector) and the stream page never ask. The password is checked on this laptop, so it
+// works without internet. "Lock the toolkit" signs this computer out.
+const SESS_FILE = path.join(DIR, 'login-sessions.json'), SESS_DAYS = 30, COOKIE = 'pf' + DIR_ID;
+let SESS = {}; try { SESS = JSON.parse(fs.readFileSync(SESS_FILE, 'utf8')) || {}; } catch (e) {}
+const saveSess = () => { const now = Date.now(); for (const k in SESS) if (!(SESS[k] && SESS[k].exp > now)) delete SESS[k]; try { fs.writeFileSync(SESS_FILE, JSON.stringify(SESS)); } catch (e) {} };
+function loginNeeded() { return !!CLOUD.pwh; }           // no church password yet: nothing to log in with, the toolkit opens as before
+const sessKey = req => { const m = new RegExp('(?:^|;\\s*)' + COOKIE + '=([a-f0-9]{48})').exec(String(req.headers.cookie || '')); return m ? crypto.createHash('sha256').update(m[1]).digest('hex') : ''; };
+function keyOk(k) {
+  if (!loginNeeded()) return true;
+  const s = k && SESS[k];
+  if (!s || !(s.exp > Date.now()) || s.p !== CLOUD.pwh.slice(0, 16)) return false;
+  if (s.keep && s.exp - Date.now() < (SESS_DAYS - 1) * 864e5) { s.exp = Date.now() + SESS_DAYS * 864e5; saveSess(); }   // used again: 30 more days
+  return true;
+}
+const sessOk = req => keyOk(sessKey(req));
+function newSess(req, keep) {
+  if (!loginNeeded()) return '';
+  const t = crypto.randomBytes(24).toString('hex');
+  SESS[crypto.createHash('sha256').update(t).digest('hex')] = { exp: Date.now() + (keep ? SESS_DAYS * 864e5 : 12 * 3600e3), keep: !!keep, p: CLOUD.pwh.slice(0, 16), at: Date.now(),
+    from: isLocalReq(req) ? 'this laptop' : String(req.socket.remoteAddress || '').replace(/^::ffff:/, '') };
+  saveSess();
+  return COOKIE + '=' + t + '; Path=/; HttpOnly; SameSite=Strict' + (keep ? '; Max-Age=' + SESS_DAYS * 86400 : '');
+}
+const lockInfo = () => ({ church: LIC.church || '', phone: SUPPORT.phone });
+// control pages that are no longer signed in (locked, or the password changed) get the login screen
+function relock() { clients.forEach(c => { if (c.view === 'control' && !c.locked && !keyOk(c.sk)) { c.full = false; c.locked = true; send(c, 'locked', lockInfo()); } }); }
+let loginBad = { n: 0, until: 0 };
+async function tryLogin(pw) {
+  if (Date.now() < loginBad.until) return { error: 'too-many' };
+  pw = String(pw || '');
+  if (pwHashLocal(pw) === CLOUD.pwh) { loginBad.n = 0; CLOUD.unlockUntil = Date.now() + 15 * 60e3; return { ok: 1 }; }
+  // not the password this laptop knows: it may have been changed on another laptop, or reset by Prepfix - ask online once
+  if (pw.length >= 6) { const r = await cloudPw('libLogin', { pw }); if (r.ok) { loginBad.n = 0; return { ok: 1 }; } if (r.error === 'too-many') return r; }
+  if (++loginBad.n >= 10) loginBad = { n: 0, until: Date.now() + 5 * 60e3 };
+  return { error: 'wrong' };
+}
+// what may be opened without logging in: the page itself, the church screen / stream (events, pictures, videos, wallpaper)
+const LOGIN_FREE = ['/', '/index.html', '/events', '/wallpaper', '/desktop-wallpaper', '/api/desktop', '/api/who', '/mark.png', '/team-badge.png', '/logo.jpg', '/manifest.json', '/icon-192.png', '/icon-512.png', '/favicon.ico', '/apple-touch-icon.png'];
+const loginFree = (p, req) => ['/api/login', '/api/closing', '/api/fullscreen', '/api/window'].includes(p) || ((req.method === 'GET' || req.method === 'HEAD') && (LOGIN_FREE.includes(p) || p.startsWith('/media/') || p.startsWith('/lib/')));
 // ---------- real-time (Server-Sent Events) ----------
 // The control page gets everything; church/stream screens only get settings + the live lyric.
 const clients = new Set();
-const send = (c, ev, obj) => { try { c.res.write('event: ' + ev + '\ndata: ' + JSON.stringify(obj) + '\n\n'); } catch (e) {} };
+const send = (c, ev, obj) => { if (c.locked && !['locked', 'reload', 'bye'].includes(ev)) return; try { c.res.write('event: ' + ev + '\ndata: ' + JSON.stringify(obj) + '\n\n'); } catch (e) {} };
 const kitInfo = () => ({ product: PRODUCT, version: KIT.version, build: KIT.build, updates: !!KIT.updateUrl });
 const dataFor = c => c.full
   ? { songs: data.songs, playlists: data.playlists, media: data.media, settings: data.settings, trashN: TRASH.length, lic: LIC, kit: kitInfo(), support: SUPPORT }
@@ -525,9 +705,12 @@ function autoProjectorCheck(first) {
     checking = false;
     if (!list.length) return; // could not read the screens this time
     const ext = list.filter(s => !s.primary).length;
-    if (ext > 0 && !proj && (first || lastExt === 0)) {
+    if (ext > 0 && (first ? !proj : lastExt === 0)) {          // projector found, or back after a power cut / loose cable: church screen goes back onto it
       console.log('  Projector / second screen found - opening the church screen on it.');
       openProjector(-1, err => { if (err) console.log('  ' + err); });
+    } else if (!ext && lastExt > 0 && proj) {                  // projector went off: take the church screen off the laptop screen so the control page stays visible
+      console.log('  Projector / second screen lost - the church screen comes back by itself when it is on again.');
+      closeProjector();
     } else if (first && !ext) console.log('  No second screen yet. Connect the projector (Windows key + P > Extend) and it will open by itself.\n');
     lastExt = ext;
   });
@@ -3331,6 +3514,86 @@ async function fetchPage(u) {
 }
 
 
+// ---------- team members from a file: Excel (.xlsx .xls .csv .ods) or Word (.docx .doc .rtf .odt) -> text lines "name <tab> phone" ----------
+const xmlText = x => xmlDecode(String(x).replace(/<w:tab\/>/g, ' ').replace(/<w:(br|cr)\b[^>]*\/>/g, ' ').replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim();
+function xlsxLines(ents) {
+  const ss = ents.find(e => /^xl\/sharedStrings\.xml$/i.test(e.name)), shared = [];
+  if (ss) for (const si of ss.data.toString('utf8').match(/<si>[\s\S]*?<\/si>|<si\/>/g) || []) shared.push(xmlDecode((si.match(/<t[^>]*>([^<]*)<\/t>/g) || []).map(t => t.replace(/<[^>]+>/g, '')).join('')));
+  const lines = [];
+  for (const sh of ents.filter(e => /^xl\/worksheets\/sheet\d*\.xml$/i.test(e.name)).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }))) {
+    for (const row of sh.data.toString('utf8').match(/<row\b[\s\S]*?<\/row>/g) || []) {
+      const cells = [];
+      for (const c of row.match(/<c\b[^>]*\/>|<c\b[^>]*>[\s\S]*?<\/c>/g) || []) {
+        const t = (/\bt="(\w+)"/.exec(c) || [])[1], v = (/<v>([^<]*)<\/v>/.exec(c) || [])[1];
+        let val = t === 's' ? shared[+v] || '' : t === 'inlineStr' ? xmlText((/<is>([\s\S]*?)<\/is>/.exec(c) || [, ''])[1]) : xmlDecode(v || '');
+        if (/^\d+(\.\d+)?E\+\d+$/i.test(val)) val = String(Math.round(+val));   // phone numbers Excel kept as 7.12E+08
+        if (String(val).trim()) cells.push(String(val).trim());
+      }
+      if (cells.length) lines.push(cells.join('\t'));
+    }
+  }
+  return lines;
+}
+function docxLines(ents) {
+  const d = ents.find(e => e.name === 'word/document.xml'); if (!d) return [];
+  let x = d.data.toString('utf8'); const lines = [];
+  x = x.replace(/<w:tr[ >][\s\S]*?<\/w:tr>/g, tr => { const cells = (tr.match(/<w:tc[ >][\s\S]*?<\/w:tc>/g) || []).map(xmlText).filter(Boolean); if (cells.length) lines.push(cells.join('\t')); return ''; });
+  for (const p of x.match(/<w:p[ >][\s\S]*?<\/w:p>/g) || []) { const t = xmlDecode(p.replace(/<w:tab\/>/g, '\t').replace(/<w:(br|cr)\b[^>]*\/>/g, '\n').replace(/<w:t>([^<]*)<\/w:t>|<w:t [^>]*>([^<]*)<\/w:t>|<[^>]+>/g, (m, a, b) => a !== undefined ? a : b !== undefined ? b : '')); t.split('\n').forEach(l => l.trim() && lines.push(l.trim())); }
+  return lines;
+}
+function odfLines(ents) {
+  const c = ents.find(e => e.name === 'content.xml'); if (!c) return [];
+  let x = c.data.toString('utf8'); const lines = [];
+  x = x.replace(/<table:table-row\b[\s\S]*?<\/table:table-row>/g, tr => { const cells = (tr.match(/<table:table-cell\b[^>]*\/>|<table:table-cell\b[\s\S]*?<\/table:table-cell>/g) || []).map(xmlText).filter(Boolean); if (cells.length) lines.push(cells.join('\t')); return ''; });
+  for (const p of x.match(/<text:(p|h)\b[\s\S]*?<\/text:(p|h)>/g) || []) { const t = xmlText(p); if (t) lines.push(t); }
+  return lines;
+}
+const OFFICE_TEXT = `$ErrorActionPreference = 'Stop'
+$in = $env:DOC_IN; $out = $env:DOC_OUT; $ext = [IO.Path]::GetExtension($in).ToLower()
+try {
+  if ($ext -in '.xls','.xlsb','.xlsm') {
+    try { $a = New-Object -ComObject Excel.Application } catch { Write-Output 'NOAPP Microsoft Excel'; exit 0 }
+    $a.DisplayAlerts = $false; $w = $a.Workbooks.Open($in, 0, $true); $all = @()
+    foreach ($sh in $w.Worksheets) { $u = $sh.UsedRange; foreach ($r in $u.Rows) { $cells = @(); foreach ($c in $r.Cells) { $t = [string]$c.Text; if ($t.Trim()) { $cells += $t.Trim() } }; if ($cells.Count) { $all += ($cells -join "\`t") } } }
+    $w.Close($false); $a.Quit(); [IO.File]::WriteAllLines($out, $all, [Text.Encoding]::UTF8)
+  } else {
+    try { $a = New-Object -ComObject Word.Application } catch { Write-Output 'NOAPP Microsoft Word'; exit 0 }
+    $a.Visible = $false; $a.DisplayAlerts = 0; $d = $a.Documents.Open($in, $false, $true); $all = @()
+    foreach ($t in $d.Tables) { foreach ($r in $t.Rows) { $cells = @(); foreach ($c in $r.Cells) { $x = ($c.Range.Text -replace '[\\r\\a\\x07]', ' ').Trim(); if ($x) { $cells += $x } }; if ($cells.Count) { $all += ($cells -join "\`t") } } }
+    foreach ($p in $d.Paragraphs) { if ($p.Range.Information(12)) { continue }; $x = ($p.Range.Text -replace '[\\r\\a\\x07]', ' ').Trim(); if ($x) { $all += $x } }
+    $d.Close(0); $a.Quit(); [IO.File]::WriteAllLines($out, $all, [Text.Encoding]::UTF8)
+  }
+  Write-Output 'OK'
+} catch { Write-Output ('ERR ' + $_.Exception.Message) }
+`;
+function memberFileLines(buf, ext, cb) {
+  ext = String(ext || '').toLowerCase();
+  try {
+    if (['.xlsx', '.docx', '.ods', '.odt'].includes(ext) || (buf[0] === 0x50 && buf[1] === 0x4b)) {
+      const ents = unzip(buf);
+      if (ents.some(e => e.name === 'word/document.xml')) return cb(null, docxLines(ents));
+      if (ents.some(e => /^xl\/worksheets\//.test(e.name))) return cb(null, xlsxLines(ents));
+      if (ents.some(e => e.name === 'content.xml')) return cb(null, odfLines(ents));
+      return cb('This file could not be read. Save it as Excel (.xlsx) or Word (.docx) and try again.');
+    }
+    if (ext === '.rtf' || String(buf.slice(0, 5)) === '{\\rtf') return cb(null, rtfToText(buf.toString('latin1')).split(/\r?\n/));
+    if (['.xls', '.xlsb', '.xlsm', '.doc'].includes(ext)) {
+      if (process.platform !== 'win32') return cb('Old Excel / Word files need Microsoft Office. Save the file as .xlsx or .docx and try again.');
+      const work = path.join(os.tmpdir(), 'prepfix-members-' + newId()); fs.mkdirSync(work, { recursive: true });
+      const src = path.join(work, 'list' + ext), out = path.join(work, 'list.txt'), script = path.join(work, 'read.ps1');
+      fs.writeFileSync(src, buf); fs.writeFileSync(script, OFFICE_TEXT);
+      return execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', script], { windowsHide: true, timeout: 120000, env: { ...process.env, DOC_IN: src, DOC_OUT: out } }, (err, o) => {
+        let lines = null; try { lines = decodeText(fs.readFileSync(out)).split(/\r?\n/); } catch (e) {}
+        try { fs.rmSync(work, { recursive: true, force: true }); } catch (e) {}
+        const app = /NOAPP (.*)/.exec(String(o || ''));
+        if (app) return cb(app[1].trim() + ' is not on this computer. Open the file elsewhere and save it as .xlsx / .docx, or copy the list and use "Paste a list".');
+        if (!lines) return cb('The file could not be opened' + (/ERR (.*)/.exec(String(o || '')) ? ': ' + /ERR (.*)/.exec(String(o))[1] : '') + '.');
+        cb(null, lines);
+      });
+    }
+    cb(null, decodeText(buf).split(/\r?\n/).map(l => l.replace(/[,;]/g, '\t')));   // .csv / .txt
+  } catch (e) { cb('The file could not be read (' + e.message + ').'); }
+}
 function readBody(req, res, cb) {
   const parts = []; let size = 0, dead = false;
   req.on('data', c => { size += c.length; if (size > MAX_BODY && !dead) { dead = true; res.writeHead(413); res.end('too big'); req.destroy(); } else parts.push(c); });
@@ -3577,15 +3840,30 @@ async function applyBackup(info) {
 }
 const dropStaged = () => { if (staged && staged.from === 'upload') { try { fs.unlinkSync(staged.file); } catch (e) {} } staged = null; try { fs.unlinkSync(STAGED); } catch (e) {} };
 
+const LIC_FREE = ['/api/license/renew', '/api/login', '/api/closing', '/api/window', '/api/who', '/api/update/check', '/api/update/apply'];
 const SERVER = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x'), p = url.pathname;
+  if (loginNeeded() && !loginFree(p, req) && !sessOk(req)) {   // the church password is needed first
+    res.writeHead(401, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify({ error: 'login' })); req.resume(); return;
+  }
+
+  // licence ended or paused by Prepfix: nothing works - only renewing (and signing in, closing, updates) is answered
+  if (['expired', 'suspended'].includes(LIC.status) && p.startsWith('/api/') && !LIC_FREE.includes(p)) {
+    LIC = readLicense();
+    if (['expired', 'suspended'].includes(LIC.status)) {
+      res.writeHead(403, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+      res.end(JSON.stringify({ error: LIC.status === 'suspended' ? 'This toolkit has been paused by Prepfix.' : 'The licence has ended. Renew it with Prepfix: ' + SUPPORT.phone }));
+      req.resume(); return;
+    }
+  }
 
   if (p === '/events') {
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive', 'X-Accel-Buffering': 'no' });
     res.write('retry: 1500\n\n');
     const c = { res, view: url.searchParams.get('view') || 'control' }; c.full = c.view === 'control'; c.local = isLocalReq(req);
+    c.sk = sessKey(req); if (c.full && !keyOk(c.sk)) { c.full = false; c.locked = true; }   // not signed in: only the login screen
     LIC = readLicense(); // re-checked whenever a screen connects
-    clients.add(c); send(c, 'data', dataFor(c)); send(c, 'live', { ...live, serverNow: Date.now() });
+    clients.add(c); if (c.locked) send(c, 'locked', lockInfo()); send(c, 'data', dataFor(c)); send(c, 'live', { ...live, serverNow: Date.now() });
     if (c.full) send(c, 'proj', { on: !!proj });
     pushScreens();
     req.on('close', () => { clients.delete(c); pushScreens(); });
@@ -3845,6 +4123,34 @@ const SERVER = http.createServer((req, res) => {
       done();
     });
 
+  } else if (p === '/api/cloud') { // online songs: status (GET), switch on/off or "check now" (POST)
+    const out = () => { res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' }); res.end(JSON.stringify(cloudStatus())); };
+    if (req.method !== 'POST') return out();
+    readBody(req, res, async b => { let q = {}; try { q = JSON.parse(b.toString('utf8')); } catch (e) {}
+      const reply = o => { const ck = o && o.ok && (q.login != null || q.setpw) ? newSess(req, true) : '';   // made / typed the password here: this page stays signed in
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache', ...(ck ? { 'Set-Cookie': ck } : {}) }); res.end(JSON.stringify(Object.assign(cloudStatus(), o))); };
+      if (q.login != null) return reply(await cloudPw('libLogin', { pw: q.login }));            // sign in / make the church password
+      if (q.setpw) return reply(await cloudPw('libPassword', { old: q.setpw.old, pw: q.setpw.pw })); // change it
+      if (q.check != null) return reply(await cloudCheck(q.check));                            // unlock deleting etc. for 15 minutes
+      if ('on' in q && !q.on && CLOUD.pwh && !(Date.now() < CLOUD.unlockUntil)) return reply({ error: 'locked' });   // switching it off needs the password
+      if ('on' in q) { CLOUD.on = !!q.on; saveCloud(); }
+      if (q.now || q.on) await cloudSync();
+      out(); });
+  } else if (p === '/api/login') { // the login screen: GET = is a login needed / signed in?  POST {pw, keep} = log in,  {out:1} = lock this computer
+    const j = (o, ck) => { res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...(ck ? { 'Set-Cookie': ck } : {}) }); res.end(JSON.stringify(o)); };
+    if (req.method !== 'POST') return j({ need: loginNeeded(), ok: sessOk(req), ...lockInfo() });
+    readBody(req, res, async b => { let q = {}; try { q = JSON.parse(b.toString('utf8')); } catch (e) {}
+      if (q.out) { const k = sessKey(req); if (k && SESS[k]) { delete SESS[k]; saveSess(); } relock(); return j({ ok: 1 }, COOKIE + '=; Path=/; Max-Age=0'); }
+      if (!loginNeeded()) return j({ ok: 1 });
+      const r = await tryLogin(q.pw);
+      if (!r.ok) return j(r);
+      console.log('  Toolkit opened with the church password' + (isLocalReq(req) ? '' : ' (from ' + String(req.socket.remoteAddress || '').replace(/^::ffff:/, '') + ')') + '.');
+      j({ ok: 1 }, newSess(req, q.keep !== false));
+    });
+  } else if (p === '/api/team/file' && req.method === 'POST') { // team members from an Excel / Word / CSV file
+    readBody(req, res, b => memberFileLines(b, url.searchParams.get('ext') || '', (err, lines) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(err ? { error: err } : { lines: (lines || []).map(l => String(l).trim()).filter(Boolean).slice(0, 5000) }));
+    }));
   } else if (p === '/api/team') { // team app settings (GET = status, POST = {on, pin, claim})
     const done = () => { res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' }); res.end(JSON.stringify(teamStatus())); };
     if (req.method !== 'POST') return done();
@@ -3928,18 +4234,30 @@ function nextPort(other) {
 }
 SERVER.listen(PORT, '0.0.0.0');
 SERVER.on('listening', () => {
+  // UPDATES ARRIVE BY THEMSELVES: when the toolkit opens with internet it checks the Prepfix update page and, if a newer
+  // version signed by Prepfix is there, installs it and restarts (only at opening, never during a service)
+  if (KIT.updateUrl) setTimeout(() => {
+    checkUpdate().then(r => {
+      if (!(r && r.available)) return;
+      console.log('\n  A newer version of the toolkit is available. Updating...');
+      return installUpdateFiles().then(x => {
+        if (x && x.ok) { console.log('  Updated to ' + x.version + ' (build ' + x.build + '). Restarting...'); restartSoon(); }
+      });
+    }).catch(() => { });                                   // offline: carry on with this version
+  }, 1500);
   try { process.title = (LIC.church || 'Prepfix Church') + ' - Prepfix Church Media Toolkit - keep this window open'; } catch (x) {}
   // auto launch: church screen full screen on the projector first, then the control page on the main screen (so it has the keyboard)
   autoProjectorCheck(true);
   setTimeout(openControlPage, 2500);
-  setInterval(() => autoProjectorCheck(false), 10000);
+  setInterval(() => autoProjectorCheck(false), 4000);
   console.log('\n  ==============================================');
   console.log('     P R E P F I X   CHURCH MEDIA TOOLKIT   ' + KIT.version);
   console.log('        Developed by Cyrus Ireri  -  0720872582');
   console.log('  ==============================================');
   rememberToday(); setInterval(() => { rememberToday(); const b = LIC.status + LIC.phase; LIC = readLicense(); if (LIC.status + LIC.phase !== b) pushData(); }, 3600000);
   setTimeout(checkin, 60000); setInterval(checkin, 30 * 60000); // every 30 minutes: suspension / renewal / message from Prepfix
-  setTimeout(() => teamSync(), 30000); setInterval(() => teamSync(), 60000); // team app: new songs out, leaders' playlists in (every minute)
+  setTimeout(() => teamSync(), 30000); setInterval(() => teamSync(), 60000);
+  setTimeout(() => cloudSync(), 20000); setInterval(() => cloudSync(), 60000); // online songs: the same library on every laptop of this church // team app: new songs out, leaders' playlists in (every minute)
   if (LIC.status === 'ok') console.log('  Licensed to: ' + LIC.church + '   (paid until ' + LIC.until + ')' + (LIC.phase !== 'ok' ? '\n  !! The licence ' + (LIC.phase === 'warn' ? 'ends soon' : 'has ended - grace days left: ' + (LIC.days + GRACE_DAYS)) + '. Renew with Prepfix: ' + SUPPORT.phone : ''));
   else if (LIC.status === 'expired') console.log('  !! LICENCE EXPIRED on ' + LIC.until + ' (' + LIC.church + '). Renew with Prepfix: ' + SUPPORT.phone);
   else if (LIC.status === 'suspended') console.log('  !! LICENCE SUSPENDED by Prepfix (' + LIC.church + '). Contact Prepfix: ' + SUPPORT.phone);

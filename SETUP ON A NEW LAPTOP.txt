@@ -6,7 +6,7 @@ ONE TIME, on your laptop (prepare the flash disk)
 1. Copy node.exe into the toolkit folder:
      - Open  C:\Program Files\nodejs
      - Copy the file  node.exe
-     - Paste it into the toolkit folder (next to server.js)
+     - Paste it into the "program" folder inside the toolkit folder
    Now the folder carries everything it needs. Nothing has to be installed anywhere.
 2. Copy the whole toolkit folder to a flash disk.
    (You can leave out: "old version (before update)", "New folder", data.backup.json)
@@ -16,7 +16,7 @@ ON THE NEW LAPTOP (anyone can do this)
 --------------------------------------
 1. Copy the toolkit folder from the flash disk to the Desktop.
    (Run it from the Desktop, NOT from the flash disk.)
-2. Open the folder and double-click  "0 START PREPFIX CHURCH"  (the first file in the list)
+2. Open the folder and double-click  "0 START PREPFIX CHURCH"  (everything else is in the "program" folder)
 3. Windows should not ask anything. (Only if the toolkit came as a zip from the internet: before unzipping,
    right-click the zip > Properties > tick "Unblock" > OK. If a blue box "Windows protected your PC"
    still shows once: click "More info", then "Run anyway". After the first start it never comes back.)
