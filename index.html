@@ -163,6 +163,42 @@ body.preview{cursor:default}
 #prac .pctl button.on{background:#e0b24a;color:#111;border-color:#e0b24a}
 #prac .pctl button:disabled{opacity:.35}
 #prac .pctl .pnote{flex:1;min-width:0;font-size:11px;color:#8a93a3;text-align:right}
+.yti{display:inline-block;width:1.45em;height:1.03em;vertical-align:-.2em}
+/* monitor: silent copy of the video that is on the projector, with its own controls */
+#ytmon{position:fixed;right:12px;bottom:36px;z-index:55;width:380px;max-width:calc(100vw - 24px);background:#12151b;border:1px solid #3a4150;border-radius:12px;box-shadow:0 10px 30px #000a;overflow:hidden}
+#ytmon.sm{width:260px}
+#ytmon .ymhd{display:flex;align-items:center;gap:6px;padding:6px 8px 6px 10px;background:#1c2028}
+#ytmon .ymt{flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#ytmon .ymhd button{padding:4px 9px;font-size:13px}
+#ytmon .ymscr{position:relative;aspect-ratio:16/9;background:#000}
+#ytmon iframe{display:block;width:100%;height:100%;border:0;pointer-events:none}
+#ytmon .ymblk{position:absolute;inset:0}
+#ytmon .ymtag{position:absolute;left:6px;top:6px;background:#000b;color:#fff;font-size:11px;padding:2px 8px;border-radius:99px}
+#ytmon .ymraw{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;font-size:13px;color:#cfd3db}
+#ytmon .ymc{padding:8px 10px;background:#161a21;border-top:1px solid #2c313a;display:flex;flex-direction:column;gap:8px}
+#ytmon .ymseek{display:flex;align-items:center;gap:8px;font-size:12px;color:#c8ccd4;font-variant-numeric:tabular-nums}
+#ytmon .ymseek input{flex:1;min-width:0;padding:0;height:22px;accent-color:#e0b24a;background:none;border:0}
+#ytmon .ymb{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+#ytmon .ymb button{padding:6px 11px;font-size:14px}
+#ytmon .ymv{display:flex;align-items:center;gap:8px;font-size:12px;color:#c8ccd4}
+#ytmon .ymv input{flex:1;min-width:0;padding:0;height:22px;accent-color:#e0b24a;background:none;border:0}
+#ytmon .ymv button{padding:5px 10px;font-size:13px}
+body.monOn main{padding-bottom:420px}
+@media(max-width:760px){
+#ytmon,#ytmon.sm{left:0;right:0;bottom:24px;width:auto;max-width:none;border-radius:12px 12px 0 0;z-index:60}
+#ytmon .ymhd{padding:4px 6px 4px 8px}
+#ytmon .ymbody{display:flex;align-items:flex-start}
+#ytmon .ymscr{flex:0 0 42%;max-width:240px}
+#ytmon .ymc{flex:1;min-width:0;border-top:0;border-left:1px solid #2c313a;padding:6px 8px;gap:6px}
+#ytmon .ymtx,#ytmon .ym30{display:none}
+#ytmon .ymtag{font-size:10px;padding:1px 6px}
+#ytmon .ymb{flex-wrap:nowrap;gap:5px}#ytmon .ymb button{padding:8px 0;font-size:14px;flex:1;min-width:0}
+#ytmon .ymseek input,#ytmon .ymv input{height:30px}
+#ytmon.sm .ymscr{flex:none;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
+#ytmon.sm .ymc{border-left:0}
+body.monOn main{padding-bottom:250px}
+body.monOn .pvw{display:none!important}
+}
 .th{margin:16px 0 6px;font-size:15px}.th:first-child{margin-top:4px}
 .brand{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:-2px 0 10px;font-size:13px;color:#aab}
 .brand{align-items:center}.blogo{height:30px;background:#fff;border-radius:6px;padding:3px 7px}.brand .bt{font-weight:700;letter-spacing:.08em;color:#ece8e1}.brand .ch{color:#e0b24a;font-weight:600}
@@ -502,6 +538,7 @@ const Q=new URLSearchParams(location.search),V0=Q.get('view')||'control',PREVIEW
 document.body.className=V+(PREVIEW?' preview':'');
 // window titles: the server finds the projector window by this title to hide / show it
 if(V==='church'&&!PREVIEW)document.title='Church Lyrics Projector';else if(V==='stream')document.title='Church Lyrics Stream';
+const YTI='<svg class="yti" viewBox="0 0 24 17" aria-hidden="true"><rect width="24" height="17" rx="4.5" fill="#f00"/><path d="M9.6 4.6v7.8l6.8-3.9z" fill="#fff"/></svg>';
 let S={songs:[],playlists:[],settings:{church:{},stream:{}},live:{}},online=true;
 const _fetch=window.fetch.bind(window);
 window.fetch=async(...a)=>{const r=await _fetch(...a);if(r.status===401&&V==='control')showLogin();return r};
@@ -972,7 +1009,7 @@ function renderAll(){
   renderSide();renderMain();fillSettings();fillSplash();
 }
 const noB=(x,after)=>x&&x.no?'<span class="sno'+(after?' after':'')+'" title="Song number">'+(after?'no. ':'')+x.no+'</span>':'';
-const row=(x,label,extra,attrs)=>'<div class="song '+(x.id===curSong?'cur':'')+'"'+(attrs||'')+' oncontextmenu="songMenu(event,\''+x.id+'\')" ontouchstart="lp(event,\''+x.id+'\')" ontouchend="clearTimeout(lpT)" ontouchmove="clearTimeout(lpT)"><span onclick="openSong(\''+x.id+'\')">'+(label?label+noB(x,1):noB(x)+esc(String(x.title).replace(/\*/g,'')))+(x.link?' <span class="hint" title="Has a practice link">🎧</span>':'')+'</span>'+(x.genre?'<span class="gen" title="Genre – press to show only this genre" onclick="pickGenre(this.textContent)">'+esc(x.genre)+'</span>':'')+(extra||'')+'</div>';
+const row=(x,label,extra,attrs)=>'<div class="song '+(x.id===curSong?'cur':'')+'"'+(attrs||'')+' oncontextmenu="songMenu(event,\''+x.id+'\')" ontouchstart="lp(event,\''+x.id+'\')" ontouchend="clearTimeout(lpT)" ontouchmove="clearTimeout(lpT)"><span onclick="openSong(\''+x.id+'\')">'+(label?label+noB(x,1):noB(x)+esc(String(x.title).replace(/\*/g,'')))+(x.link?' <span class="hint" title="Has a practice link (YouTube)">'+YTI+'</span>':'')+'</span>'+(x.genre?'<span class="gen" title="Genre – press to show only this genre" onclick="pickGenre(this.textContent)">'+esc(x.genre)+'</span>':'')+(extra||'')+'</div>';
 /* ---- playlist sections (Slow set, Fast set, Choir…) with the lead or group ---- */
 // a section is a marker "§<id>" inside the playlist's list; its name and lead are kept in playlist.secs
 const isSec=id=>String(id).charAt(0)==='§';
@@ -1547,7 +1584,7 @@ function renderMain(){
       S.playlists.map(p=>'<option value="'+p.id+'">Add to '+esc(p.name)+(p.songIds.includes(sg.id)?' ✓':'')+'</option>').join('')+'<option value="__new">Add to a new playlist…</option><option value="__svc">📋 Add to service list</option><option value="del">Delete song</option></select></div>';
     h+='<div class="bar" style="margin:-4px 0 8px;align-items:center"><select style="width:auto;padding:4px 8px;font-size:13px" onchange="songFolder(this.value)"><option value="__none">📁 No folder</option>'+folderOpts(sg.folder)+'<option value="__new">+ New folder…</option></select>'+'<select style="width:auto;padding:4px 8px;font-size:13px" onchange="songGenre(this.value)"><option value="__none">🏷 No genre</option>'+genres().map(g=>'<option value="'+esc(g)+'"'+(g===sg.genre?' selected':'')+'>🏷 '+esc(g)+'</option>').join('')+'<option value="__new">+ New genre…</option></select>'+'<select style="width:auto;padding:4px 8px;font-size:13px" onchange="songLang(this.value)" title="Language of this song"><option value="__none">🌐 No language</option>'+langs().map(g=>'<option value="'+esc(g)+'"'+(g===sg.lang?' selected':'')+'>🌐 '+esc(g)+'</option>').join('')+'<option value="__new">+ Other language…</option></select>'+
       (sL.length?sL.map((l,k)=>'<button class="pri" style="padding:5px 12px;font-size:13px" onclick="playPractice(\''+sg.id+'\','+k+')">▶ '+(sL.length>1?esc(l.n||'Link '+(k+1)):'Play practice song')+'</button>').join('')+'<button style="padding:5px 10px;font-size:13px" onclick="setLink()" title="Add another link, change or remove links">✎ Links</button>'+sL.map((l,k)=>castable(l.u)?'<button style="padding:5px 12px;font-size:13px" title="Show this video full screen on the projector so the church can sing" onclick="projYTSong(\''+sg.id+'\','+k+')">📺 '+(sL.length>1?esc(l.n||'Link '+(k+1)):'Show on projector')+'</button>':'').join('')
-              :'<button style="padding:5px 12px;font-size:13px" onclick="setLink()">🎧 Add practice link</button>')+'</div>';
+              :'<button style="padding:5px 12px;font-size:13px" onclick="setLink()">'+YTI+' Add practice link</button>')+'</div>';
     if(near)h+='<p class="hint" style="margin:-6px 0 10px">'+esc(near.p.name)+' · song '+(near.i+1)+' of '+near.n+(near.sec?' · <b style="color:#e0b24a">'+secLabel(near.sec)+'</b>':'')+'</p>';
     h+=(prac&&prac.id===sg.id?'<div id="pracSlot"></div>':'');
     const st=stanzas(sg.text),cIdx=chorusIdx(sg);
@@ -1836,7 +1873,7 @@ function playPractice(id,k){
     :p.kind==='video'?'<video src="'+esc(p.src)+'" controls autoplay playsinline'+(pracLoop?' loop':'')+'></video>'
     :'<iframe src="'+esc(p.src)+'" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>';
   box.className='sz-'+size+(p.kind==='audio'?' aud':'')+(p.tall?' tall':'');
-  box.innerHTML='<div class="phd"><span class="pt">🎧 '+esc(String(sg.title).replace(/\*/g,''))+' <span class="hint">· '+esc(lk.n||p.name)+'</span></span>'+
+  box.innerHTML='<div class="phd"><span class="pt">'+YTI+' '+esc(String(sg.title).replace(/\*/g,''))+' <span class="hint">· '+esc(lk.n||p.name)+'</span></span>'+
     (L.length>1?'<select style="width:auto;max-width:120px;padding:3px 4px;font-size:12px" onchange="playPractice(\''+sg.id+'\',this.value)" title="Other practice links">'+L.map((l,i)=>'<option value="'+i+'"'+(i===k?' selected':'')+'>'+esc(l.n||'Link '+(i+1))+'</option>').join('')+'</select>':'')+
     '<button onclick="openSong(\''+sg.id+'\')" title="Show this song\'s lyrics">Lyrics</button>'+
     (castable(lk.u)?'<button onclick="pracToProj()" title="Show this video on the projector for the church">📺</button>':'')+(p.kind==='frame'?'<button onclick="pracSize()" title="Smaller / bigger">⇕</button>':'')+
@@ -3439,7 +3476,97 @@ async function ytPasteBox(){
   try{const t=(await navigator.clipboard.readText()).trim();const m=t.match(/https?:\/\/[^\s<>"']+/i);ytUrl.value=m?m[0]:t}
   catch(e){ytUrl.focus();alert('This browser does not allow the button to read the clipboard. Tap in the box and paste with Ctrl+V (on a phone, press and hold, then Paste).')}
 }
-function ytCmd(c){const L=S.live||{};if(L.mode!=='yt'||!L.yt)return;setLive({...L,yt:{...L.yt,cmd:c,n:(L.yt.n||0)+1,playing:c==='play'}})}
+// commands for the video on the projector: play, pause, seek (t = seconds), restart, vol (t = 0-100), mute, unmute
+function ytCmd(c,t){
+  const L=S.live||{};if(L.mode!=='yt'||!L.yt)return;
+  const Y=L.yt,y={...Y,cmd:c,t:t===undefined?0:t,n:(Y.n||0)+1};
+  if(c==='play'||c==='restart')y.playing=true;else if(c==='pause')y.playing=false;
+  if(c==='vol'){y.vol=Math.max(0,Math.min(100,Math.round(t)));y.muted=false}else if(c==='mute')y.muted=true;else if(c==='unmute')y.muted=false;
+  setLive({...L,yt:y});
+}
+// runs one command on a YouTube player (send = function(name,args)); quiet = the silent monitor, which ignores sound commands
+function ytExec(Y,send,quiet){
+  const c=Y.cmd,t=+Y.t||0;
+  if(c==='pause')send('pauseVideo');
+  else if(c==='play')send('playVideo');
+  else if(c==='seek')send('seekTo',[Math.max(0,t),true]);
+  else if(c==='restart'){send('seekTo',[0,true]);send('playVideo')}
+  else if(!quiet){
+    if(c==='vol'){send('unMute');send('setVolume',[Math.max(0,Math.min(100,Math.round(t)))])}
+    else if(c==='mute')send('mute');
+    else if(c==='unmute')send('unMute');
+  }
+}
+/* ---- monitor screen (control page only): a silent copy of the video on the projector, with its own controls,
+   so nobody has to touch the projected screen. The sound comes only from the projector. ---- */
+let mon=null; // {k,n,t,dur,st,drag}
+const monFmt=s=>{s=Math.max(0,Math.floor(s||0));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(x).padStart(2,'0')};
+function monSend(fn,a){const f=document.querySelector('#ytmon iframe');if(f&&f.contentWindow)try{f.contentWindow.postMessage(JSON.stringify({event:'command',func:fn,args:a||[]}),'*')}catch(e){}}
+function ytMon(){
+  if(V!=='control')return;
+  const L=S.live||{},Y=L.mode==='yt'&&L.yt&&!L.churchBlank&&!licStopped(S.lic)?L.yt:null;
+  let box=document.getElementById('ytmon');
+  if(!Y){if(box)box.remove();mon=null;document.body.classList.remove('monOn');return}
+  const raw=!!Y.raw;
+  if(!box||!mon||mon.k!==Y.k){
+    const sm=box&&box.classList.contains('sm');if(box)box.remove();
+    box=document.createElement('div');box.id='ytmon';if(sm)box.classList.add('sm');
+    mon={k:Y.k,n:Y.n||0,t:0,dur:0,st:-1,drag:false};
+    box.innerHTML='<div class="ymhd"><span class="ymt">'+YTI+' <b>Monitor</b> · '+esc(Y.title||'video on the projector')+'</span><button onclick="monSize()" title="Smaller / bigger">⇕</button></div>'+
+      '<div class="ymbody"><div class="ymscr">'+(raw?'<div class="ymraw">This video is showing on the projector.<br>Only YouTube videos can be watched and controlled from here.</div>':'<iframe allow="autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin"></iframe><div class="ymblk"></div><div class="ymtag">🔇<span class="ymtx"> silent here · sound is on the projector</span></div>')+'</div>'+
+      '<div class="ymc">'+(raw?'':
+        '<div class="ymseek"><span id="ymtc">0:00</span><input type="range" id="ymseek" min="0" max="1000" value="0" oninput="monDrag(this.value)" onchange="monSeek(this.value)" title="Drag to move the video forward or back"><span id="ymtd">0:00</span></div>'+
+        '<div class="ymb"><button onclick="monRestart()" title="Start again">⏮</button><button class="ym30" onclick="monSkip(-30)" title="Back 30 seconds">−30</button><button onclick="monSkip(-10)" title="Back 10 seconds">⏪ 10</button><button id="ymplay" class="pri" onclick="monToggle()" title="Pause / play">⏸</button><button onclick="monSkip(10)" title="Forward 10 seconds">10 ⏩</button><button class="ym30" onclick="monSkip(30)" title="Forward 30 seconds">+30</button></div>'+
+        '<div class="ymv"><button id="ymmute" onclick="monMute()" title="Mute / unmute the projector">🔊</button><input type="range" id="ymvol" min="0" max="100" value="100" oninput="monVolLab(this.value)" onchange="ytCmd(\'vol\',+this.value)" title="Projector volume"><span id="ymvl" style="width:34px;text-align:right">100%</span></div>')+
+        '<div class="ymb"><button class="dng" onclick="ytStop()" style="flex:1">⏹ Stop and take it off the projector</button></div></div></div>';
+    document.body.appendChild(box);document.body.classList.add('monOn');
+    const f=box.querySelector('iframe');
+    if(f){
+      f.addEventListener('load',()=>{const hello=()=>{try{f.contentWindow.postMessage(JSON.stringify({event:'listening',id:1,channel:'widget'}),'*')}catch(e){}monSend('mute')};hello();setTimeout(hello,900)});
+      f.src=Y.src+(Y.src.includes('origin=')?'':'&origin='+encodeURIComponent(location.origin))+'&mute=1';
+    }
+  }else if(!raw&&mon.n!==(Y.n||0)){
+    mon.n=Y.n||0;
+    ytExec(Y,monSend2,true);
+    if(Y.cmd==='seek')mon.t=+Y.t||0;else if(Y.cmd==='restart')mon.t=0;
+  }
+  monPaint();
+}
+const monSend2=(fn,a)=>monSend(fn,a);
+function monPaint(){
+  if(!mon)return;const L=S.live||{},Y=L.yt||{};
+  const sk=document.getElementById('ymseek');if(!sk)return;
+  if(mon.drag&&Date.now()-(mon.dragAt||0)>5000)mon.drag=false;
+  if(!mon.drag){sk.value=mon.dur?Math.round(1000*Math.min(1,mon.t/mon.dur)):0;document.getElementById('ymtc').textContent=monFmt(mon.t)}
+  document.getElementById('ymtd').textContent=monFmt(mon.dur);
+  const pl=mon.st===1||mon.st===3||(mon.st===-1&&Y.playing!==false);
+  document.getElementById('ymplay').textContent=pl?'⏸':'▶';
+  const v=Y.muted?0:(Y.vol===undefined?100:Y.vol),vs=document.getElementById('ymvol');
+  if(vs&&document.activeElement!==vs){vs.value=v;document.getElementById('ymvl').textContent=Y.muted?'muted':v+'%'}
+  document.getElementById('ymmute').textContent=Y.muted?'🔇':'🔊';
+}
+function monDrag(v){if(!mon)return;mon.drag=true;mon.dragAt=Date.now();document.getElementById('ymtc').textContent=monFmt(mon.dur*(+v)/1000)}
+function monSeek(v){if(!mon)return;const t=mon.dur*(+v)/1000;mon.drag=false;ytCmd('seek',t)}
+function monSkip(d){if(!mon)return;ytCmd('seek',Math.max(0,Math.min(mon.dur||1e9,mon.t+d)))}
+function monToggle(){if(!mon)return;ytCmd(mon.st===1||mon.st===3?'pause':'play')}
+function monRestart(){ytCmd('restart')}
+function monMute(){const Y=(S.live||{}).yt||{};ytCmd(Y.muted?'unmute':'mute')}
+function monVolLab(v){const e=document.getElementById('ymvl');if(e)e.textContent=v+'%'}
+function monSize(){const b=document.getElementById('ytmon');if(b)b.classList.toggle('sm')}
+addEventListener('message',e=>{
+  const f=document.querySelector('#ytmon iframe');if(!f||!mon||e.source!==f.contentWindow)return;
+  let d=e.data;if(typeof d==='string'){try{d=JSON.parse(d)}catch(_){return}}
+  if(!d||typeof d!=='object')return;const i=d.info;
+  if(d.event==='onStateChange'&&typeof i==='number')mon.st=i;
+  else if(d.event==='infoDelivery'&&i){
+    if(typeof i.currentTime==='number'&&!mon.drag)mon.t=i.currentTime;
+    if(typeof i.duration==='number'&&i.duration>0)mon.dur=i.duration;
+    if(typeof i.playerState==='number')mon.st=i.playerState;
+  }else return;
+  monPaint();
+});
+// the monitor follows every change of the live screen
+if(typeof renderMain==='function'){const _rm0=renderMain;renderMain=function(){const r=_rm0.apply(this,arguments);try{ytMon()}catch(e){}return r}}
 function ytStop(){const L=S.live||{};if(L.mode==='yt')setLive({...L,mode:'song',yt:null})}
 const AL_PRE=[['Red','#c0392b','#ffffff'],['Orange','#e67e22','#ffffff'],['Yellow','#f4d03f','#000000'],['Green','#1e8449','#ffffff'],['Blue','#1f5fbf','#ffffff'],['Purple','#7d3c98','#ffffff'],['Black','#000000','#ffffff'],['White','#ffffff','#000000']];
 function alDefaults(){let o={};try{o=JSON.parse(localStorage.getItem('alCol')||'{}')}catch(e){}return{bg:String(o.bg||'#c0392b').toLowerCase(),fg:String(o.fg||'#ffffff').toLowerCase()}}
@@ -3495,7 +3622,7 @@ function showYtLayer(Y){
   el.style.display='block';
   if(f.dataset.n!==String(Y.n||0)){
     f.dataset.n=String(Y.n||0);
-    if(Y.cmd)try{f.contentWindow.postMessage(JSON.stringify({event:'command',func:Y.cmd==='pause'?'pauseVideo':'playVideo',args:[]}),'*')}catch(e){}
+    if(Y.cmd)ytExec(Y,(fn,a)=>{try{f.contentWindow.postMessage(JSON.stringify({event:'command',func:fn,args:a||[]}),'*')}catch(e){}});
   }
 }
 function showMediaLayer(M){
