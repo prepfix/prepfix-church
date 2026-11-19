@@ -29,7 +29,7 @@ html:has(body.stream),body.stream{background:transparent}.stream .out{align-item
 #sseal{flex:0 0 auto;width:16vh;height:16vh;color:#fff;filter:drop-shadow(0 0 3px #000) drop-shadow(0 1px 5px rgba(0,0,0,.9));display:none}#sseal svg{width:100%;height:100%;display:block}
 /* control */
 #app{display:grid;grid-template-columns:320px 1fr;min-height:100vh}
-aside{background:#1d2026;padding:12px;border-right:1px solid #2c313a;overflow:auto;max-height:calc(100vh - var(--bh,0px));position:sticky;top:var(--bh,0px)}
+aside{background:#1d2026;padding:12px;border-right:1px solid #2c313a;overflow:auto;max-height:calc(100vh - var(--bh,0px) - var(--ph,0px));position:sticky;top:calc(var(--bh,0px) + var(--ph,0px))}
 main{padding:14px;max-width:920px;width:100%}
 .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 .multibar{padding:8px 10px;margin:4px 0 6px;background:#232a36;border-left:3px solid #e0b24a;border-radius:6px;font-size:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}.multibar button{padding:6px 10px}
@@ -43,12 +43,12 @@ main{padding:14px;max-width:920px;width:100%}
 .fold{display:flex;gap:8px;align-items:center;margin:6px 0 2px;padding:10px 10px;background:#232832;border:1px solid #2f3641;border-radius:8px;cursor:pointer;font-weight:700;-webkit-user-select:none;user-select:none}.fold.open{background:#2d3441;border-color:#e0b24a}.fold .fbtn{padding:2px 7px;font-size:13px;font-weight:400;opacity:.75}.fold .fbtn:hover{opacity:1}.fold .fn{flex:1}.fold small{opacity:.75;font-weight:400}
 .secrow{display:flex;gap:6px;align-items:center;margin:12px 0 2px;padding:6px 8px;background:#2a2410;border-left:4px solid #e0b24a;border-radius:6px}.secrow>span{flex:1;font-weight:700;color:#f0c75e;cursor:pointer;text-transform:uppercase;letter-spacing:.03em;font-size:14px}.secrow button{padding:3px 8px}.secrow .slead,.slead{text-transform:none;color:#ddd;font-weight:600;letter-spacing:0;flex:none}
 .selr{cursor:pointer}.selr span{color:#e8eaf0;font-size:15px}.selr input{width:20px;height:20px;flex:0 0 auto;margin:0 4px;accent-color:#e0b24a}.selr.on{background:#2a3550!important;color:#fff!important}.selr.on span{color:#fff;font-weight:600}.selbar{position:sticky;top:0;z-index:5;background:#161a21;border:1px solid #e0b24a;border-radius:8px;padding:8px;margin-bottom:8px}
-.status{background:#0f1115;border:1px solid #333a45;border-radius:8px;padding:10px;margin-bottom:14px;font-size:14px;position:sticky;top:var(--bh,0px);z-index:5}
+.status{background:#0f1115;border:1px solid #333a45;border-radius:8px;padding:10px;margin-bottom:14px;font-size:14px;position:sticky;top:calc(var(--bh,0px) + var(--ph,0px));z-index:5}
 .status b{color:#e0b24a}
 .srow{display:flex;align-items:center;gap:8px;padding:3px 0}.srow+.srow{border-top:1px solid #262b34;margin-top:3px;padding-top:6px}
 .srow .dot{flex:0 0 auto;margin:0}.slab{flex:0 0 58px;font-weight:700;color:#ece8e1}
 #credit{position:fixed;left:0;right:0;bottom:0;z-index:60;height:24px;line-height:24px;text-align:center;font-size:11.5px;font-weight:700;letter-spacing:.08em;color:#e0b24a;background:#101318;border-top:1px solid #2c313a;pointer-events:none;user-select:none}
-body:has(#credit){padding-bottom:24px}body:has(#credit) aside{max-height:calc(100vh - 24px - var(--bh,0px))}
+body:has(#credit){padding-bottom:24px}body:has(#credit) aside{max-height:calc(100vh - 24px - var(--bh,0px) - var(--ph,0px))}
 .teamToast{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:80;background:#1f6f4a;color:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 8px 24px #0009;max-width:92vw}.teamToast button{margin-left:8px;padding:3px 10px}
 #prac{position:fixed;right:12px;bottom:36px;z-index:50;background:#12151b;border:1px solid #3a4150;border-radius:12px;box-shadow:0 10px 30px #000a;display:flex;flex-direction:column;overflow:hidden}
 #prac .phd{display:flex;align-items:center;gap:4px;padding:5px 6px 5px 10px;background:#1c2028}
@@ -426,11 +426,20 @@ aside .sno{height:1.9em;min-width:2em;margin-right:6px}
 #manyRes{max-height:50vh!important}
 
 /* live previews: projector (church screen) and stream, always on top */
-#prevbar{position:sticky;top:52px;z-index:39;display:flex;gap:14px;height:132px;padding:4px 14px;background:#16181d;border-bottom:1px solid #2c313a}
-.pvb{position:relative;box-sizing:border-box;width:224px;height:124px;border:2px solid #e0b24a;border-radius:6px;overflow:hidden;background:#000;flex:none}
-.pvb iframe{width:1280px;height:720px;border:0;transform:scale(.171875);transform-origin:0 0;pointer-events:none}
-.pvb span{position:absolute;left:4px;top:2px;z-index:2;font-size:10px;font-weight:700;color:#fff;background:#000b;padding:1px 6px;border-radius:3px}
-@media(max-width:760px){#prevbar{display:none}}
+#prevbar{position:sticky;top:var(--bh,0px);z-index:39;display:flex;gap:14px;align-items:center;height:calc(var(--ph) - 1px);padding:0 14px;background:#16181d;border-bottom:1px solid #2c313a;overflow:hidden}
+:root{--ph:67px}
+.pvc{display:flex;align-items:center;gap:8px;min-width:0}
+.pvb{position:relative;box-sizing:content-box;width:96px;height:54px;border:2px solid #ffb54a;border-radius:5px;overflow:hidden;background:#000;flex:none}
+.pvb.st{border-color:#4dd0e1}
+.pvb iframe{width:1280px;height:720px;border:0;transform:scale(.075);transform-origin:0 0;pointer-events:none;display:block}
+.pvi{display:flex;flex-direction:column;gap:4px;align-items:flex-start;min-width:0}
+.pvi .pl{font-size:11px;font-weight:800;letter-spacing:.06em;padding:1px 7px;border-radius:5px;color:#1a1204;background:#ffb54a;white-space:nowrap}
+.pvi .pl.st{background:#4dd0e1;color:#021418}
+.pvi .livebadge{padding:0 7px;font-size:10.5px;border-width:1.5px;gap:4px}
+.pvi .stog{min-width:0;padding:4px 9px;font-size:12.5px;white-space:nowrap}
+.pvi .stog.ch{background:#6b4a14;color:#ffe2b0}.pvi .stog.st{background:#145a66;color:#d6f8ff}.pvi .stog.off{background:#b8392f!important;color:#fff!important;border-color:#b8392f}
+body.preview.stream,html:has(body.preview.stream){background:#1b1f27!important}
+@media(max-width:760px){#prevbar{gap:8px;padding:0 6px}:root{--ph:56px}.pvb{width:64px;height:36px}.pvb iframe{transform:scale(.05)}.pvc{gap:5px;flex:1 1 0}.pvi{gap:2px}.pvi .pl{font-size:9.5px;padding:0 5px}.pvi .stog{padding:3px 6px;font-size:11px}.pvi .livebadge{font-size:9px;padding:0 5px}}
 
 /* Phone app and Team app windows fill the PC screen */
 #phDlg,#teamDlg{width:96vw;max-width:none;height:94vh;max-height:94vh;overflow:auto;padding:22px 30px;font-size:18px}
@@ -534,7 +543,7 @@ body.licstop #side{display:none!important}body.licstop #app{display:block}body.l
 </style></head>
 <body>
 <script>
-const Q=new URLSearchParams(location.search),V0=Q.get('view')||'control',PREVIEW=V0==='preview',V=PREVIEW?'church':V0;
+const Q=new URLSearchParams(location.search),V0=Q.get('view')||'control',PREVIEW=V0==='preview',V=PREVIEW?(Q.get('of')==='stream'?'stream':'church'):V0;
 document.body.className=V+(PREVIEW?' preview':'');
 // window titles: the server finds the projector window by this title to hide / show it
 if(V==='church'&&!PREVIEW)document.title='Church Lyrics Projector';else if(V==='stream')document.title='Church Lyrics Stream';
@@ -1566,10 +1575,8 @@ function renderMain(){
   // church and stream, one above the other: what each shows now, and its own show / hide button
   const chOff=!!L.churchHide,stOff=!!L.streamBlank;
   h+='<div class="status">'+(online?'':'<div><b style="color:#ff7a6e">Reconnecting…</b></div>')+
-        '<div class="srow churchrow"><span class="dot'+(online?'':' off')+'"></span><span class="slab">Church</span><span class="sval">'+(chOff?'<b>Hidden – your normal wallpaper is showing</b>':'<b>'+(L.churchBlank?'Church wallpaper':liveDesc(L,cs))+'</b>'+stz)+'</span>'+
-      '<button class="stog'+(chOff?' off':'')+'" onclick="toggleHide()">'+(chOff?'Show church':'Hide church')+'</button></div>'+
-    '<div class="srow streamrow"><span class="dot'+(online?'':' off')+'"></span><span class="slab">Stream</span>'+((!stOff&&!other&&L.stream)?'<span class="livebadge on" title="The stream is showing lyrics now">LIVE</span>':'<span class="livebadge" title="Nothing from here is on the stream">OFF AIR</span>')+'<span class="sval">'+(stOff?'<b>Blank – camera only</b>':'<b>'+(other?'(no lyrics – camera only)':esc(L.stream||'(empty)'))+'</b>')+'</span>'+
-      '<button class="stog'+(stOff?' off':'')+'" onclick="toggleStream()">'+(stOff?'Show stream':'Blank stream')+'</button></div>'+
+        '<div class="srow churchrow"><span class="dot'+(online?'':' off')+'"></span><span class="slab">Church</span><span class="sval">'+(chOff?'<b>Hidden – your normal wallpaper is showing</b>':'<b>'+(L.churchBlank?'Church wallpaper':liveDesc(L,cs))+'</b>'+stz)+'</span></div>'+
+    '<div class="srow streamrow"><span class="dot'+(online?'':' off')+'"></span><span class="slab">Stream</span><span class="sval">'+(stOff?'<b>Blank – camera only</b>':'<b>'+(other?'(no lyrics – camera only)':esc(L.stream||'(empty)'))+'</b>')+'</span></div>'+
     (L.audio?'<br>Music: <b>🎵 '+esc(L.audio.name)+(L.audio.play?'':' (paused)')+'</b> <button style="padding:2px 8px" onclick="acmd(\''+(L.audio.play?'pause':'play')+'\')">'+(L.audio.play?'⏸':'▶')+'</button> <button style="padding:2px 8px" onclick="acmd(\'stop\')">⏹</button>':'')+
     (alertOn(L.alert)?'<br><span id="stAlert">Alert: <b style="color:#ff8a7e">'+esc(String(L.alert.text).replace(/\n/g,' · '))+'</b> <button style="padding:2px 8px" onclick="clearAlert()">Clear</button></span>':'')+
     (!isM&&sg&&plNear(sg)?plStripHtml(plNear(sg),sg,L):'')+(nav?'<div class="navb">'+nav+'</div>':'')+'<div class="qnav"><button class="'+(PAIRS()?'pon':'')+'" onclick="togglePairs()" title="Church and stream show the same 2 lines; one click moves both">'+(PAIRS()?'☑':'☐')+' 2 lines</button><button onclick="quickTab(\'songs\')">🎵 Songs</button><button onclick="quickTab(\'folders\')">📁 Folders</button><button onclick="quickTab(\'pl\')">🎶 Playlists</button><button onclick="quickTab(\'svc\')">📋 Service</button></div></div>';
@@ -1608,8 +1615,20 @@ let showPv=false,pvFrame=null;
 const isPhone=()=>matchMedia('(max-width:760px)').matches;
 // the preview box is made once and never moved (moving it would reload it)
 function placeScreenPreview(){
-  // the church-screen preview in the bottom right corner is removed: nothing is created, and an old one is taken away
-  const box=document.getElementById('pvw');if(box)box.remove();
+  // small live pictures of the church screen and the stream, always at the top, with their Hide / Blank buttons.
+  // the pictures are made once and never redrawn (redrawing would reload them); only the labels and buttons change.
+  const old=document.getElementById('pvw');if(old)old.remove();
+  const bar=document.getElementById('prevbar');if(!bar)return;
+  if(!bar.firstChild){
+    bar.innerHTML='<div class="pvc"><div class="pvb" title="What the church screen shows now"><iframe src="/?view=preview" tabindex="-1" aria-hidden="true"></iframe></div><div class="pvi" id="pvChurch"></div></div>'+
+      '<div class="pvc"><div class="pvb st" title="What the stream shows now"><iframe src="/?view=preview&amp;of=stream" tabindex="-1" aria-hidden="true"></iframe></div><div class="pvi" id="pvStream"></div></div>';
+  }
+  const L=S.live||{},chOff=!!L.churchHide,stOff=!!L.streamBlank,other=L.mode&&L.mode!=='song';
+  const c=document.getElementById('pvChurch'),s=document.getElementById('pvStream');
+  const ch='<span class="pl">CHURCH</span><button class="stog ch'+(chOff?' off':'')+'" onclick="toggleHide()" title="'+(chOff?'Show the lyrics on the church screen again':'Hide the lyrics: the projector shows your normal wallpaper')+'">'+(chOff?'Show church':'Hide church')+'</button>';
+  const st='<span class="pl st">STREAM</span>'+((!stOff&&!other&&L.stream)?'<span class="livebadge on" title="The stream is showing lyrics now">LIVE</span>':'<span class="livebadge" title="Nothing from here is on the stream">OFF AIR</span>')+'<button class="stog st'+(stOff?' off':'')+'" onclick="toggleStream()" title="'+(stOff?'Show the lyrics on the stream again':'Blank the stream: camera only')+'">'+(stOff?'Show stream':'Blank stream')+'</button>';
+  if(c&&c.dataset.h!==ch){c.dataset.h=ch;c.innerHTML=ch}
+  if(s&&s.dataset.h!==st){s.dataset.h=st;s.innerHTML=st}
 }
 addEventListener('resize',()=>{if(V==='control'){placeScreenPreview();renderChorusPin()}});
 addEventListener('keydown',e=>{
@@ -4155,7 +4174,7 @@ function removeWp(){if(confirm('Remove the church wallpaper?'))fetch('/api/wallp
 if(V==='control'){
   document.addEventListener('focusin',e=>{const t=e.target;if(t&&t.tagName==='INPUT'&&!t.hasAttribute('list'))t.setAttribute('autocomplete','off')}); // no saved search history suggestions
   const fo=FONTS.map(f=>'<option>'+f+'</option>').join('');
-  document.body.insertAdjacentHTML('beforeend',`<div id="brandbar"></div><div id="app"><aside id="side"></aside><main id="main"><p>Connecting…</p></main></div><div id="credit">DEVELOPED BY CYRUS IRERI 0720872582</div>
+  document.body.insertAdjacentHTML('beforeend',`<div id="brandbar"></div><div id="prevbar"></div><div id="app"><aside id="side"></aside><main id="main"><p>Connecting…</p></main></div><div id="credit">DEVELOPED BY CYRUS IRERI 0720872582</div>
 <dialog id="dupDlg"><h3 style="margin-top:4px">🔍 Duplicate songs</h3>
 <div class="bar" style="margin-bottom:6px"><label style="margin:0">Group songs whose words are</label>
 <select id="dupMode" style="width:auto" onchange="dupRun(true)"><option value="most">almost the same (85%)</option><option value="half" selected>very similar (60%)</option><option value="any">partly similar (40%)</option><option value="title">the SAME TITLE (any words) or exactly the same words</option></select></div>
