@@ -360,8 +360,12 @@ async function cloudSync() {
     }
     // SAFETY: most of the songs suddenly missing on this laptop (a damaged or emptied copy) is never sent as "deleted":
     // the laptop takes the church's songs back from the online copy instead
-    const isS = k => k.slice(0, 2) === 's:', goneS = push.gone.filter(isS).length, hadS = Object.keys(CLOUD.base).filter(isS).length;
+    const isS = k => k.slice(0, 2) === 's:', hadS = Object.keys(CLOUD.base).filter(isS).length;
+    const meant = new Set(CLOUD.meant || []), goneS = push.gone.filter(k => isS(k) && !meant.has(k)).length;
     if (goneS > 20 && goneS > hadS * 0.5) return relinkCloud('most of the songs are missing on this laptop');
+    // songs deleted on purpose go online at most 20 at a time (the online copy refuses more at once), the rest straight after
+    let more = false;
+    { let m = 0; push.gone = push.gone.filter(k => { if (!isS(k) || !meant.has(k)) return true; if (m < 20 - Math.min(20, goneS)) { m++; return true; } more = true; return false; }); }
     const body = { action: 'libSync', id: L.id, church: L.church || '', computer: os.hostname(), since: CLOUD.rev, push, lk: CLOUD.lk || undefined };
     const r = await fetch(KIT.checkin, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(body), redirect: 'follow', signal: AbortSignal.timeout(180000) });
     const j = await r.json();
@@ -374,6 +378,8 @@ async function cloudSync() {
       if (j.needPw && CLOUD.pwh) { CLOUD.pwh = ''; CLOUD.lk = ''; console.log('  Online songs: the church password was reset - make a new one in Settings.'); }
       for (const k in push.items) CLOUD.base[k] = cHash(push.items[k]);
       push.gone.forEach(k => delete CLOUD.base[k]);
+      if (CLOUD.meant && CLOUD.meant.length) CLOUD.meant = CLOUD.meant.filter(k => k in CLOUD.base);
+      if (more) setTimeout(() => cloudSync(), 2000);
       CLOUD.sent += Object.keys(push.items).length + push.gone.length;
       let n = 0;
       if (!j.same) {
@@ -398,7 +404,7 @@ async function cloudSync() {
 }
 function relinkCloud(why) {
   console.log('  Online songs: ' + why + ' - taking the church\'s songs from the online copy.');
-  CLOUD.joined = false; CLOUD.rev = 0; CLOUD.base = {}; saveCloud(); CLOUD.busy = false;
+  CLOUD.joined = false; CLOUD.rev = 0; CLOUD.base = {}; CLOUD.meant = []; saveCloud(); CLOUD.busy = false;
   setTimeout(() => cloudSync(), 1000);
 }
 // church password: sign this laptop in (or make the password, if the church has none yet), or change it
@@ -506,6 +512,8 @@ function applyUpdate(p) {
       const now = Date.now();
       gone.forEach(x => { const wasIn = (data.playlists || []).filter(pl => (pl.songIds || []).includes(x.id)).map(pl => pl.name); TRASH = TRASH.filter(t => t.id !== x.id); TRASH.push({ ...x, deletedAt: now, wasIn }); });
       saveTrash();
+      // deleted on purpose here: the online songs send these even when they are many (see cloudSync)
+      CLOUD.meant = [...new Set([...(CLOUD.meant || []), ...gone.map(x => 's:' + x.id)])]; saveCloud();
     }
     // a song keeps its number even if the page sends it back without one
     const oldNo = new Map((data.songs || []).filter(x => goodNo(x.no)).map(x => [x.id, x.no]));
