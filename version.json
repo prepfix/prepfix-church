@@ -1,15 +1,15 @@
 {
  "product": "PREPFIX CHURCH TOOLKIT",
  "version": "V1",
- "build": "202611211035",
- "notes": "alot",
+ "build": "202611161817",
+ "notes": "make update files",
  "files": {
   "0 START PREPFIX CHURCH.bat": "b3e410b968a8cd1c2816722247bb81482125128283100a0ca43a541ca8ff716b",
   "HOW TO USE.txt": "67f930499faaf7ab64b32244b2685361f72126151d685690f9358bec7430a7ff",
   "index.html": "2b0743e5603a6733a936b5c11f9447edcdade3ea1b7503f1b3ed72ff26701ea3",
-  "server.js": "77fb0d0ef22f6372efe24fcf446c68fbae9f7c260cd62e5f6a88c041704bae57",
+  "server.js": "f51856512091560b5c636a9b9a155cde0d158ada8960bc25f1314823553e2be3",
   "SETUP ON A NEW LAPTOP.txt": "46aff29e4d58d0f85c8e0351b88492b5e644e56458af0dfe4efbe246f7b2713d",
   "Start Prepfix Church.bat": "cf8458014c572a8dc25a6364ae736b117747b074d4aa6feb1dece85680e7b68b"
  },
- "sig": "trkmfzjJuTZRVeqi4Xc/AzjFjNdVmEyHb58fCrdQFMNQNh0G+u/P4nA/Sj5d1GVsY8zFzgRN2fIAbKHVDPR2Cw=="
+ "sig": "GEAZklR2SiV9vwRw4W8UpkksbIW+elPEe1VD9a2nZ6ebel+v3HoeQ3RS7ZySnW4I7aGykuvkqw14r2O/jTUfCA=="
 }
